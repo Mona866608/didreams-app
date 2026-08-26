@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>DiDreams</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#123A6D">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DiDreams">
+<style>
+:root{
+  --ink:#123A6D; --paper:#FAFBF8; --card:#FFFFFF;
+  --gold:#F5C518; --gold-soft:#FDF4D6; --green:#1F6B41; --green-soft:#DCEDE2;
+  --rule:#D9DEE3; --muted:#6C7B88; --red:#C0392B;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--paper);color:#12181F;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px}
+body{padding-bottom:104px}
+
+.top{background:var(--ink);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 18px 0}
+.row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.brand{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.who{display:flex;gap:6px}
+.who button{background:transparent;border:1px solid rgba(255,255,255,.3);color:#A9BACA;
+  font-size:12px;padding:5px 11px;border-radius:14px;font-weight:600}
+.who button.on{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+
+.net{display:none;font-size:11.5px;padding:7px 18px;margin:0 -18px 0;font-weight:600}
+.net.off{display:block;background:#7A2018;color:#FFD9D4}
+.net.queued{display:block;background:var(--gold);color:var(--ink)}
+
+.toggle{display:flex;margin:0 -18px}
+.toggle button{flex:1;padding:15px 8px;border:0;background:rgba(255,255,255,.07);
+  color:#A9BACA;font-size:15px;font-weight:600}
+.toggle button.on{background:var(--paper);color:var(--ink)}
+.toggle button.on.in{color:var(--green)}
+
+.slip{background:var(--card);margin:0 14px 18px;padding:22px 20px 20px;
+  border:1px solid var(--rule);border-top:0;position:relative}
+.slip::before{content:"";position:absolute;top:0;left:0;right:0;height:6px;
+  background:repeating-linear-gradient(90deg,var(--rule) 0 7px,transparent 7px 14px)}
+.slip label{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);font-weight:700;margin-bottom:6px}
+.amt{display:flex;align-items:baseline;gap:8px}
+#amount{flex:1;border:0;outline:0;background:transparent;width:100%;
+  font-family:"SFMono-Regular",Menlo,Consolas,monospace;font-size:40px;font-weight:600;
+  letter-spacing:-.02em;text-align:right;padding:0;color:#12181F}
+#amount::placeholder{color:#C7CFD6}
+.cur{font-size:17px;font-weight:700;color:var(--ink)}
+
+.sect{padding:0 18px;margin-bottom:20px}
+.sect>label{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);font-weight:700;margin-bottom:9px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--rule);background:var(--card);color:#12181F;padding:11px 14px;
+  font-size:14.5px;border-radius:22px;font-weight:500;min-height:44px;
+  display:inline-flex;align-items:center}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600}
+body.in .chip.on{background:var(--green);border-color:var(--green)}
+input[type=text],input[type=date]{width:100%;padding:14px;font-size:16px;
+  border:1px solid var(--rule);background:var(--card);border-radius:4px;outline:0;font-family:inherit}
+input:focus{border-color:var(--gold)}
+details{margin:0 18px 20px;border-top:1px solid var(--rule);padding-top:14px}
+summary{font-size:13.5px;color:var(--ink);font-weight:600;list-style:none;padding:4px 0}
+summary::-webkit-details-marker{display:none}
+summary::after{content:" +";font-weight:700}
+details[open] summary::after{content:" –"}
+details .sect{padding:0;margin-top:16px}
+
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--rule);
+  padding:12px 18px calc(12px + env(safe-area-inset-bottom));display:flex;gap:12px;align-items:center}
+.bar .echo{flex:1;font-size:13px;color:var(--muted);line-height:1.3}
+.bar .echo b{color:#12181F;font-size:15px;display:block}
+#save{border:0;background:var(--ink);color:#fff;font-size:16px;font-weight:700;
+  padding:15px 26px;border-radius:4px;min-width:132px}
+body.in #save{background:var(--green)}
+#save:disabled{background:#B9C2CA}
+
+.done{position:fixed;inset:0;background:var(--paper);display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;padding:30px}
+.done.show{display:flex}
+.tick{width:66px;height:66px;border-radius:50%;background:var(--green-soft);display:flex;
+  align-items:center;justify-content:center;font-size:32px;color:var(--green)}
+.tick.q{background:var(--gold-soft);color:#8A6D0B}
+.done h2{font-size:21px}
+.done p{color:var(--muted);font-size:14px;text-align:center;line-height:1.5}
+.done code{font-family:Menlo,monospace;background:var(--gold-soft);padding:3px 8px;
+  border-radius:3px;color:var(--ink);font-size:13px}
+.err{margin:0 18px 14px;padding:12px 14px;background:#FBE3E5;border:1px solid #E4A9AE;
+  color:#8C1F27;font-size:14px;border-radius:4px;display:none}
+.err.show{display:block}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="row">
+    <span class="brand">DiDreams</span>
+    <div class="who" id="who">
+      <button data-p="Danielle">Danielle</button>
+      <button data-p="Monique">Monique</button>
+    </div>
+  </div>
+  <div class="net" id="net"></div>
+  <div class="toggle">
+    <button id="tOut" class="on">Money out</button>
+    <button id="tIn">Money in</button>
+  </div>
+</div>
+
+<div class="slip">
+  <label>Amount</label>
+  <div class="amt">
+    <input id="amount" inputmode="numeric" placeholder="0">
+    <span class="cur">FCFA</span>
+  </div>
+</div>
+
+<div class="err" id="err"></div>
+
+<div class="sect"><label>What was it?</label><div class="chips" id="cats"></div></div>
+<div class="sect"><label>Money came from / went to</label><div class="chips" id="srcs"></div></div>
+<div class="sect"><label>What was it for?</label><input type="text" id="desc" placeholder="A few words"></div>
+
+<details>
+  <summary>More details</summary>
+  <div class="sect"><label>Date</label><input type="date" id="date"></div>
+  <div class="sect"><label>Who was paid, or who paid us?</label><input type="text" id="party" placeholder="Optional"></div>
+  <div class="sect"><label>Activity</label><div class="chips" id="acts"></div></div>
+  <div class="sect"><label>Receipt reference</label><input type="text" id="receipt" placeholder="Optional"></div>
+</details>
+
+<div class="bar">
+  <div class="echo"><b id="echoAmt">—</b><span id="echoCat">Pick a category</span></div>
+  <button id="save">Record</button>
+</div>
+
+<div class="done" id="done">
+  <div class="tick" id="tick">✓</div>
+  <h2 id="doneTtl">Recorded</h2>
+  <p id="doneMsg"></p>
+</div>
+
+<script>
+/* ============================================================
+   PASTE YOUR WEB APP URL HERE — it must end with /exec
+   ============================================================ */
+var ENDPOINT = 'https://script.google.com/macros/s/AKfycbzD98s84YJhCYt6cZPoj7eLhSz_tHUhN3Xi9aSh8zizRR4r7hgImHX0gKDWDhIsT3-S/exec';
+var TOKEN    = 'dd-7Kq2mXv9Rt4LpZ8w';   // must match PWA_TOKEN in Form.gs
+/* ========================================================== */
+
+var CATS = {
+  OUT: [
+    ['Rent','6222','COMMON','OUT'],
+    ['Electricity','6052','COMMON','OUT'],
+    ['Water','6051','COMMON','OUT'],
+    ['Internet / CAMTEL','6281','MARKETING','OUT'],
+    ['Office supplies','6055','OFFICE','OUT'],
+    ['Cleaning','6241','COMMON','OUT'],
+    ['Transport / taxi','614','COMMON','OUT'],
+    ['Freelance work','6057','MARKETING','OUT'],
+    ['Salary','6611','COMMON','OUT'],
+    ['Bank / MoMo fees','6318','COMMON','OUT'],
+    ['Tax / stamps','6418','COMMON','OUT'],
+    ['Repay the director','4621','COMMON','TRF'],
+    ['Something else','','COMMON','OUT']
+  ],
+  IN: [
+    ['Marketing client','706','MARKETING','IN'],
+    ['Printing / copies','706','OFFICE','IN'],
+    ['Something else','','COMMON','IN']
+  ]
+};
+var SRCS = [['Petty cash','CASH'],['UBA account','UBA'],['Company MoMo','COY-OM'],
+            ['My bank','DIR-BANK'],['My Orange Money','DIR-OM']];
+var ACTS = [['Office','OFFICE'],['Marketing','MARKETING'],['Shared','COMMON']];
+
+var dir='OUT', cat=null, src=null, act=null, actTouched=false, person=null;
+function el(i){return document.getElementById(i);}
+function fmt(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' ');}
+function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k);
+  localStorage.setItem(k,v);}catch(e){return null;} }
+
+/* ---------- offline queue ---------- */
+function queue(){ try{ return JSON.parse(localStorage.getItem('dd_queue')||'[]'); }
+  catch(e){ return []; } }
+function setQueue(q){ try{ localStorage.setItem('dd_queue',JSON.stringify(q)); }catch(e){} }
+
+function send(payload){
+  return fetch(ENDPOINT, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(payload)
+  }).then(function(r){ return r.json(); });
+}
+
+function flush(){
+  var q = queue();
+  if(!q.length || !navigator.onLine) { banner(); return; }
+  var next = q[0];
+  send(next).then(function(res){
+    if(res && res.ok){
+      var rest = queue(); rest.shift(); setQueue(rest);
+      banner(); flush();
+    }
+  }).catch(function(){ banner(); });
+}
+
+function banner(){
+  var n = el('net'), q = queue().length;
+  n.className = 'net';
+  if(!navigator.onLine){
+    n.className='net off';
+    n.textContent = q ? ('Offline — ' + q + ' entr' + (q>1?'ies':'y') + ' waiting to send')
+                      : 'Offline — entries will be saved and sent later';
+  } else if(q){
+    n.className='net queued';
+    n.textContent = q + ' entr' + (q>1?'ies':'y') + ' waiting to send…';
+  }
+}
+
+window.addEventListener('online', function(){ banner(); flush(); });
+window.addEventListener('offline', banner);
+
+/* ---------- ui ---------- */
+function chips(id, list, pick){
+  var box = el(id); box.innerHTML='';
+  list.forEach(function(row){
+    var b=document.createElement('button');
+    b.className='chip'; b.type='button'; b.textContent=row[0];
+    b.onclick=function(){
+      [].forEach.call(box.children,function(x){x.classList.remove('on');});
+      b.classList.add('on'); pick(row);
+    };
+    box.appendChild(b);
+  });
+}
+
+function cats(){
+  cat=null; actTouched=false;
+  chips('cats', CATS[dir], function(row){
+    cat=row;
+    if(!actTouched){
+      act=null;
+      [].forEach.call(el('acts').children,function(x,i){
+        x.classList.toggle('on', ACTS[i][1]===row[2]);
+        if(ACTS[i][1]===row[2]) act=ACTS[i];
+      });
+    }
+    echo();
+  });
+  echo();
+}
+
+function setDir(d){
+  dir=d;
+  el('tOut').className = d==='OUT'?'on':'';
+  el('tIn').className  = d==='IN'?'on in':'';
+  document.body.classList.toggle('in', d==='IN');
+  cats();
+}
+el('tOut').onclick=function(){setDir('OUT');};
+el('tIn').onclick =function(){setDir('IN');};
+
+el('amount').addEventListener('input',function(){
+  var raw=this.value.replace(/[^0-9]/g,'');
+  this.value = raw?fmt(raw):'';
+  echo();
+});
+
+function echo(){
+  var raw=el('amount').value.replace(/[^0-9]/g,'');
+  el('echoAmt').textContent = raw ? fmt(raw)+' F' : '—';
+  el('echoCat').textContent = cat ? cat[0]+(src?' · '+src[0]:'') : 'Pick a category';
+}
+
+function fail(m){ var e=el('err'); e.textContent=m; e.classList.add('show');
+  window.scrollTo({top:0,behavior:'smooth'}); }
+
+function finish(queued, ref){
+  el('tick').className = queued ? 'tick q' : 'tick';
+  el('tick').textContent = queued ? '⏳' : '✓';
+  el('doneTtl').textContent = queued ? 'Saved on this phone' : 'Recorded';
+  el('doneMsg').innerHTML = queued
+    ? 'No connection right now.<br>It will be sent by itself once you are back online.'
+    : 'Saved as <code>' + ref + '</code><br>Monique will check it before it counts.';
+  el('done').classList.add('show');
+  setTimeout(function(){ location.reload(); }, 2400);
+}
+
+el('save').onclick=function(){
+  el('err').classList.remove('show');
+  var raw=el('amount').value.replace(/[^0-9]/g,'');
+  if(!raw)  return fail('Enter an amount.');
+  if(!cat)  return fail('Pick a category.');
+  if(!src)  return fail('Say where the money came from or went to.');
+  if(!el('desc').value.trim()) return fail('Say what it was for.');
+
+  var payload = {
+    token: TOKEN,
+    amount: raw,
+    type: cat[3],
+    account: cat[1],
+    activity: act ? act[1] : cat[2],
+    category: cat[0],
+    source: src[1],
+    description: el('desc').value.trim(),
+    counterparty: el('party').value.trim(),
+    receipt: el('receipt').value.trim(),
+    date: el('date').value,
+    person: person || 'unknown'
+  };
+
+  el('save').disabled=true; el('save').textContent='Saving…';
+
+  if(!navigator.onLine){
+    var q=queue(); q.push(payload); setQueue(q); banner(); finish(true); return;
+  }
+
+  send(payload).then(function(res){
+    if(res && res.ok){ finish(false, res.ref); }
+    else {
+      el('save').disabled=false; el('save').textContent='Record';
+      fail((res && res.message) || 'Refused by the server.');
+    }
+  }).catch(function(){
+    var q=queue(); q.push(payload); setQueue(q); banner(); finish(true);
+  });
+};
+
+/* ---------- boot ---------- */
+(function(){
+  var d=new Date();
+  el('date').value = d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  chips('srcs', SRCS, function(v){ src=v; echo(); });
+  chips('acts', ACTS, function(v){ act=v; actTouched=true; });
+  cats();
+  person = ls('dd_person');
+  [].forEach.call(el('who').children,function(b){
+    if(b.dataset.p===person) b.classList.add('on');
+    b.onclick=function(){
+      [].forEach.call(el('who').children,function(x){x.classList.remove('on');});
+      b.classList.add('on'); person=b.dataset.p; ls('dd_person',person);
+    };
+  });
+  banner(); flush();
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  }
+})();
+</script>
+</body>
+</html>

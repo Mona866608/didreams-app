@@ -1,0 +1,17 @@
+{
+  "name": "DiDreams — record a transaction",
+  "short_name": "DiDreams",
+  "description": "Record a payment or a collection for Digital Dreams SARL, online or offline.",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAFBF8",
+  "theme_color": "#123A6D",
+  "lang": "en",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
