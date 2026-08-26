@@ -11,88 +11,164 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DiDreams">
 <style>
+/* ============================================================
+   DiDreams receipt — presentation only. Charte: 8 colours,
+   system fonts, tabular figures. No shadows / gradients /
+   blanket rounded corners / emoji icons. Gold only marks,
+   never carries text; red is errors only.
+   ============================================================ */
 :root{
   --ink:#123A6D; --paper:#FAFBF8; --card:#FFFFFF;
   --gold:#F5C518; --gold-soft:#FDF4D6; --green:#1F6B41; --green-soft:#DCEDE2;
-  --rule:#D9DEE3; --muted:#6C7B88; --red:#C0392B;
+  --rule:#D9DEE3; --muted:#6C7B88; --red:#C0392B; --black:#12181F;
+  --accent:var(--ink);          /* flips to green in "money in" mode */
+  --tap:44px;
 }
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{background:var(--paper);color:#12181F;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px}
-body{padding-bottom:104px}
+body.in{ --accent:var(--green); }
 
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+html,body{background:var(--paper);color:var(--black);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px}
+body{padding-bottom:120px}
+
+/* tabular figures so amount columns align in the sheet's mental model */
+.mono{font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Roboto Mono",monospace;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+
+/* ---------- header ---------- */
 .top{background:var(--ink);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 18px 0}
-.row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.brand{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:700}
-.who{display:flex;gap:6px}
-.who button{background:transparent;border:1px solid rgba(255,255,255,.3);color:#A9BACA;
-  font-size:12px;padding:5px 11px;border-radius:14px;font-weight:600}
+.row{display:flex;justify-content:space-between;align-items:center;min-height:var(--tap)}
+.brand{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.who{display:flex;gap:8px}
+.who button{background:transparent;border:1px solid rgba(255,255,255,.35);color:#C4D0DC;
+  font-size:13px;padding:0 14px;min-height:var(--tap);border-radius:2px;font-weight:600}
 .who button.on{background:var(--gold);border-color:var(--gold);color:var(--ink)}
 
-.net{display:none;font-size:11.5px;padding:7px 18px;margin:0 -18px 0;font-weight:600}
-.net.off{display:block;background:#7A2018;color:#FFD9D4}
-.net.queued{display:block;background:var(--gold);color:var(--ink)}
+/* status banners — colour + position carry the meaning at a glance */
+.net{display:none;font-size:12px;line-height:1.35;padding:9px 18px;margin:10px -18px 0;font-weight:600}
+.net.off{display:block;background:#7A2018;color:#FFD9D4}                 /* offline: dark red bar */
+.net.queued{display:block;background:var(--gold-soft);color:#6A5300;     /* queued: gold marks, not carries */
+  border-left:5px solid var(--gold);padding-left:13px}
 
-.toggle{display:flex;margin:0 -18px}
-.toggle button{flex:1;padding:15px 8px;border:0;background:rgba(255,255,255,.07);
-  color:#A9BACA;font-size:15px;font-weight:600}
-.toggle button.on{background:var(--paper);color:var(--ink)}
-.toggle button.on.in{color:var(--green)}
+/* money out / money in switch */
+.toggle{display:flex;margin:14px -18px 0;gap:2px}
+.toggle button{flex:1;padding:16px 8px;border:0;background:rgba(255,255,255,.08);
+  color:#B7C4D2;font-size:15px;font-weight:600;min-height:var(--tap);
+  border-bottom:3px solid transparent}
+.toggle button.on{background:var(--paper);color:var(--ink);border-bottom-color:var(--gold)}
+.toggle button.on.in{color:var(--green);border-bottom-color:var(--green)}
 
-.slip{background:var(--card);margin:0 14px 18px;padding:22px 20px 20px;
+/* ---------- the receipt ---------- */
+.slip{background:var(--card);margin:16px 14px 22px;padding:24px 20px 22px;
   border:1px solid var(--rule);border-top:0;position:relative}
-.slip::before{content:"";position:absolute;top:0;left:0;right:0;height:6px;
-  background:repeating-linear-gradient(90deg,var(--rule) 0 7px,transparent 7px 14px)}
-.slip label{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--muted);font-weight:700;margin-bottom:6px}
-.amt{display:flex;align-items:baseline;gap:8px}
-#amount{flex:1;border:0;outline:0;background:transparent;width:100%;
-  font-family:"SFMono-Regular",Menlo,Consolas,monospace;font-size:40px;font-weight:600;
-  letter-spacing:-.02em;text-align:right;padding:0;color:#12181F}
-#amount::placeholder{color:#C7CFD6}
-.cur{font-size:17px;font-weight:700;color:var(--ink)}
+/* torn top edge, like a ticket pulled off the roll */
+.slip::before{content:"";position:absolute;left:-1px;right:-1px;top:-10px;height:11px;
+  background:var(--card);border-top:1px solid var(--rule);
+  -webkit-mask:
+    linear-gradient(135deg,#000 46%,transparent 47%) 0 100%/12px 12px repeat-x,
+    linear-gradient(45deg,#000 46%,transparent 47%) 0 100%/12px 12px repeat-x;
+  mask:
+    linear-gradient(135deg,#000 46%,transparent 47%) 0 100%/12px 12px repeat-x,
+    linear-gradient(45deg,#000 46%,transparent 47%) 0 100%/12px 12px repeat-x}
+.slip label{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);font-weight:700;margin-bottom:8px}
 
-.sect{padding:0 18px;margin-bottom:20px}
-.sect>label{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+/* amount is the centre of gravity */
+.amt{display:flex;align-items:baseline;justify-content:flex-end;gap:10px;
+  border-bottom:2px solid var(--rule);padding-bottom:6px}
+#amount{flex:1;min-width:0;border:0;outline:0;background:transparent;
+  font-size:clamp(42px,15vw,58px);font-weight:600;letter-spacing:-.02em;
+  text-align:right;padding:0;color:var(--black);line-height:1.05}
+#amount::placeholder{color:var(--muted);opacity:.5}
+.cur{flex:none;font-size:14px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted)}
+
+/* ---------- sections & category chips ---------- */
+.sect{padding:0 18px;margin-bottom:22px}
+.sect>label{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
   color:var(--muted);font-weight:700;margin-bottom:9px}
-.chips{display:flex;flex-wrap:wrap;gap:7px}
-.chip{border:1px solid var(--rule);background:var(--card);color:#12181F;padding:11px 14px;
-  font-size:14.5px;border-radius:22px;font-weight:500;min-height:44px;
-  display:inline-flex;align-items:center}
-.chip.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600}
-body.in .chip.on{background:var(--green);border-color:var(--green)}
-input[type=text],input[type=date]{width:100%;padding:14px;font-size:16px;
-  border:1px solid var(--rule);background:var(--card);border-radius:4px;outline:0;font-family:inherit}
-input:focus{border-color:var(--gold)}
-details{margin:0 18px 20px;border-top:1px solid var(--rule);padding-top:14px}
-summary{font-size:13.5px;color:var(--ink);font-weight:600;list-style:none;padding:4px 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--rule);background:var(--card);color:var(--black);
+  padding:0 15px;min-height:var(--tap);font-size:15px;border-radius:2px;font-weight:500;
+  display:inline-flex;align-items:center;line-height:1.2}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+/* the neutral "Something else" escape hatch always sits apart at the end */
+#cats .chip:last-child{margin-left:auto;border-style:dashed;color:var(--muted)}
+#cats .chip:last-child.on{color:#fff;border-style:solid}
+
+input[type=text],input[type=date]{width:100%;padding:0 14px;min-height:var(--tap);
+  font-size:16px;border:1px solid var(--rule);background:var(--card);border-radius:2px;
+  outline:0;font-family:inherit;color:var(--black)}
+input[type=date]{padding-top:11px;padding-bottom:11px}
+input:focus{border-color:var(--accent)}
+
+/* visible focus that survives full sun — gold outline is a marker, not text */
+input:focus-visible,.chip:focus-visible,.who button:focus-visible,
+.toggle button:focus-visible,summary:focus-visible,#save:focus-visible{
+  outline:3px solid var(--gold);outline-offset:2px}
+
+details{margin:2px 18px 22px;border-top:1px solid var(--rule);padding-top:4px}
+summary{font-size:14px;color:var(--ink);font-weight:600;list-style:none;
+  padding:12px 0;min-height:var(--tap);display:flex;align-items:center;
+  justify-content:space-between;cursor:pointer}
 summary::-webkit-details-marker{display:none}
-summary::after{content:" +";font-weight:700}
-details[open] summary::after{content:" –"}
+summary::after{content:"+";font-weight:700;font-size:18px;color:var(--muted)}
+details[open] summary::after{content:"\2013"}
 details .sect{padding:0;margin-top:16px}
 
-.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--rule);
-  padding:12px 18px calc(12px + env(safe-area-inset-bottom));display:flex;gap:12px;align-items:center}
-.bar .echo{flex:1;font-size:13px;color:var(--muted);line-height:1.3}
-.bar .echo b{color:#12181F;font-size:15px;display:block}
-#save{border:0;background:var(--ink);color:#fff;font-size:16px;font-weight:700;
-  padding:15px 26px;border-radius:4px;min-width:132px}
-body.in #save{background:var(--green)}
+/* ---------- validation bar ---------- */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--card);
+  border-top:1px solid var(--rule);
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:flex;gap:14px;align-items:stretch}
+.bar .echo{flex:1;min-width:0;align-self:center;font-size:12.5px;color:var(--muted);line-height:1.3}
+.bar .echo b{color:var(--black);font-size:20px;display:block;letter-spacing:-.01em}
+#save{border:0;background:var(--accent);color:#fff;font-size:16px;font-weight:700;
+  padding:0 26px;min-height:56px;min-width:132px;border-radius:2px;letter-spacing:.01em}
+#save:active{transform:translateY(1px)}
 #save:disabled{background:#B9C2CA}
 
-.done{position:fixed;inset:0;background:var(--paper);display:none;flex-direction:column;
-  align-items:center;justify-content:center;gap:14px;padding:30px}
+/* ---------- confirmation ---------- */
+.done{position:fixed;inset:0;z-index:10;background:var(--paper);display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;
+  padding:30px calc(30px + env(safe-area-inset-right)) 30px calc(30px + env(safe-area-inset-left))}
 .done.show{display:flex}
-.tick{width:66px;height:66px;border-radius:50%;background:var(--green-soft);display:flex;
-  align-items:center;justify-content:center;font-size:32px;color:var(--green)}
-.tick.q{background:var(--gold-soft);color:#8A6D0B}
-.done h2{font-size:21px}
-.done p{color:var(--muted);font-size:14px;text-align:center;line-height:1.5}
-.done code{font-family:Menlo,monospace;background:var(--gold-soft);padding:3px 8px;
-  border-radius:3px;color:var(--ink);font-size:13px}
-.err{margin:0 18px 14px;padding:12px 14px;background:#FBE3E5;border:1px solid #E4A9AE;
-  color:#8C1F27;font-size:14px;border-radius:4px;display:none}
+.tick{width:72px;height:72px;border-radius:50%;background:var(--green-soft);display:flex;
+  align-items:center;justify-content:center;font-size:34px;color:var(--green);position:relative}
+/* queued state: hide the JS glyph, draw a plain clock (no emoji) */
+.tick.q{background:var(--gold-soft);color:#8A6D0B;font-size:0}
+.tick.q::after{content:"";width:26px;height:26px;border:3px solid currentColor;border-radius:50%}
+.tick.q::before{content:"";position:absolute;width:3px;height:9px;background:currentColor;
+  border-radius:2px;transform:translateY(-4px)}
+.done h2{font-size:22px;color:var(--ink)}
+.done p{color:var(--muted);font-size:14.5px;text-align:center;line-height:1.55;max-width:30ch}
+.done code{font-family:ui-monospace,Menlo,monospace;background:var(--gold-soft);padding:3px 8px;
+  border-radius:2px;color:var(--ink);font-size:13px;font-weight:600}
+
+/* ---------- error ---------- */
+.err{margin:14px 18px 0;padding:12px 14px;background:#FBE3E5;border:1px solid #E4A9AE;
+  border-left:5px solid var(--red);color:#8C1F27;font-size:14px;border-radius:2px;
+  display:none;font-weight:500}
 .err.show{display:block}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion:reduce){
+  *{scroll-behavior:auto !important;animation:none !important;transition:none !important}
+  #save:active{transform:none}
+}
+
+/* ---------- dark mode, same charte ---------- */
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#0E1621; --card:#16212E; --black:#EAF0F6;
+    --rule:#2C3A4A; --muted:#93A2B2;
+    --gold-soft:#2A2410; --green-soft:#14261C;
+  }
+  .toggle button.on{color:#DCE6F0}
+  .toggle button.on.in{color:#7FD0A2}
+  .net.queued{color:var(--gold)}
+  .done code{color:#F5D97A}
+}
 </style>
 </head>
 <body>
@@ -115,7 +191,7 @@ body.in #save{background:var(--green)}
 <div class="slip">
   <label>Amount</label>
   <div class="amt">
-    <input id="amount" inputmode="numeric" placeholder="0">
+    <input id="amount" class="mono" inputmode="numeric" placeholder="0">
     <span class="cur">FCFA</span>
   </div>
 </div>
@@ -135,7 +211,7 @@ body.in #save{background:var(--green)}
 </details>
 
 <div class="bar">
-  <div class="echo"><b id="echoAmt">—</b><span id="echoCat">Pick a category</span></div>
+  <div class="echo"><b id="echoAmt" class="mono">—</b><span id="echoCat">Pick a category</span></div>
   <button id="save">Record</button>
 </div>
 
