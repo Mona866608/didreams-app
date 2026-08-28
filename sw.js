@@ -2,7 +2,7 @@
    Caches the app shell so the form opens with no connection at all.
    Entries themselves are queued by index.html in localStorage. */
 
-var CACHE = 'didreams-v2';
+var CACHE = 'didreams-v3';
 var SHELL = [
   'index.html',
   'manifest.json',

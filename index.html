@@ -3,223 +3,185 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<title>DiDreams</title>
+<title>Cash Log</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#123A6D">
+<meta name="theme-color" content="#EFECE7">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="DiDreams">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Cash Log">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   DiDreams receipt — presentation only. Charte: 8 colours,
-   system fonts, tabular figures. No shadows / gradients /
-   blanket rounded corners / emoji icons. Gold only marks,
-   never carries text; red is errors only.
+   Cash Log — "Calm rows". The amount is the only large element;
+   category, source and note are quiet rows that open a sheet.
+   Design tokens are lifted verbatim from the handoff.
    ============================================================ */
 :root{
-  --ink:#123A6D; --paper:#FAFBF8; --card:#FFFFFF;
-  --gold:#F5C518; --gold-soft:#FDF4D6; --green:#1F6B41; --green-soft:#DCEDE2;
-  --rule:#D9DEE3; --muted:#6C7B88; --red:#C0392B; --black:#12181F;
-  --accent:var(--ink);          /* flips to green in "money in" mode */
-  --tap:44px;
+  --page:#EFECE7; --surface:#FBFAF8; --raised:#FFFDFB; --muted:#F1EDE7; --selected:#F4F1EC;
+  --border:#E7E2DB; --border-strong:#E3DED7; --hairline:#EFEAE3;
+  --ink:#1C1917; --secondary:#57534E; --dim:#78716C; --faint:#A29A92; --place:#C0B9B0; --chev:#C9C2B9;
+  --out:#9A2C2C; --out-tint:#FBEDEC; --in:#166534; --in-tint:#E9F0E5;
+  --warn:#B45309; --warn-tint:#FBF0DC; --warn-ink:#8A5A0B; --on-dark:#FBFAF8; --on-dark2:#FFF8EE;
 }
-body.in{ --accent:var(--green); }
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--page);color:var(--ink);
+  font-family:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  font-size:15px;-webkit-text-size-adjust:100%}
+.mono{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-variant-numeric:tabular-nums}
+input{font-family:inherit}
 
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{-webkit-text-size-adjust:100%}
-html,body{background:var(--paper);color:var(--black);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px}
-body{padding-bottom:120px}
+/* mobile shell — no fake status bar or device chrome; the real OS draws it */
+.shell{min-height:100dvh;display:flex;flex-direction:column;max-width:520px;margin:0 auto;
+  background:var(--surface);position:relative;overflow:hidden}
+.scroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
 
-/* tabular figures so amount columns align in the sheet's mental model */
-.mono{font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Roboto Mono",monospace;
-  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+/* band */
+.band{display:flex;align-items:center;gap:9px;padding:calc(9px + env(safe-area-inset-top)) 22px 9px;
+  font-size:12.5px;font-weight:500;color:var(--on-dark2)}
+.band .dot{width:7px;height:7px;border-radius:50%;background:var(--on-dark2);opacity:.85;flex:none}
+.band.off{background:var(--out)} .band.queued{background:var(--warn)}
 
-/* ---------- header ---------- */
-.top{background:var(--ink);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 18px 0}
-.row{display:flex;justify-content:space-between;align-items:center;min-height:var(--tap)}
-.brand{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:700}
-.who{display:flex;gap:8px}
-.who button{background:transparent;border:1px solid rgba(255,255,255,.35);color:#C4D0DC;
-  font-size:13px;padding:0 14px;min-height:var(--tap);border-radius:2px;font-weight:600}
-.who button.on{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+.head{display:flex;align-items:center;justify-content:space-between;padding:14px 22px}
+.head.safe{padding-top:calc(14px + env(safe-area-inset-top))}
+.date{font-size:11.5px;color:var(--faint)}
+.userchip{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 6px;border-radius:99px;
+  background:var(--muted);cursor:pointer;min-height:36px;border:0}
+.avatar{border-radius:50%;display:grid;place-items:center;font-weight:600;color:#3B3733;flex:none}
+.userchip .name{font-size:12.5px;color:var(--secondary)}
 
-/* status banners — colour + position carry the meaning at a glance */
-.net{display:none;font-size:12px;line-height:1.35;padding:9px 18px;margin:10px -18px 0;font-weight:600}
-.net.off{display:block;background:#7A2018;color:#FFD9D4}                 /* offline: dark red bar */
-.net.queued{display:block;background:var(--gold-soft);color:#6A5300;     /* queued: gold marks, not carries */
-  border-left:5px solid var(--gold);padding-left:13px}
+/* amount block */
+.amountwrap{display:flex;flex-direction:column;gap:14px;align-items:center;padding:8px 22px 0}
+.seg{display:flex;padding:3px;background:var(--muted);border-radius:99px;gap:3px}
+.seg button{border:0;padding:9px 20px;border-radius:99px;font-size:14px;font-weight:500;cursor:pointer;
+  min-height:40px;background:transparent;color:var(--faint);font-family:inherit}
+.seg button.on{background:var(--raised);color:var(--ink);box-shadow:0 1px 3px rgba(28,25,23,.12)}
+.amount{display:flex;align-items:baseline;gap:8px;cursor:pointer;padding:6px 4px;border:0;background:0}
+.amount .big{font-size:48px;letter-spacing:-.03em;color:var(--place)}
+.amount .big.out{color:var(--out)} .amount .big.in{color:var(--in)}
+.amount .cur{font-size:16px;color:var(--faint)}
+.hint{font-size:12px;color:var(--faint);margin-top:-6px}
 
-/* money out / money in switch */
-.toggle{display:flex;margin:14px -18px 0;gap:2px}
-.toggle button{flex:1;padding:16px 8px;border:0;background:rgba(255,255,255,.08);
-  color:#B7C4D2;font-size:15px;font-weight:600;min-height:var(--tap);
-  border-bottom:3px solid transparent}
-.toggle button.on{background:var(--paper);color:var(--ink);border-bottom-color:var(--gold)}
-.toggle button.on.in{color:var(--green);border-bottom-color:var(--green)}
+/* field rows */
+.rows{display:flex;flex-direction:column;border-top:1px solid var(--hairline);padding:0 22px;margin-top:26px}
+.row{display:flex;align-items:center;gap:14px;padding:16px 2px;border-bottom:1px solid var(--hairline);
+  cursor:pointer;min-height:60px;background:0;border:0;text-align:left;width:100%;font-family:inherit}
+.row .lbl{width:112px;flex:none;font-size:13.5px;color:var(--faint)}
+.row .val{flex:1;min-width:0;font-size:15px;color:var(--ink);font-weight:500;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .val.empty{color:var(--place);font-weight:400}
+.row .chev{font-size:15px;color:var(--chev)}
+.derived{font-size:12px;color:var(--faint);text-align:center;padding:16px 22px 0}
 
-/* ---------- the receipt ---------- */
-.slip{background:var(--card);margin:16px 14px 22px;padding:24px 20px 22px;
-  border:1px solid var(--rule);border-top:0;position:relative}
-/* torn top edge, like a ticket pulled off the roll */
-.slip::before{content:"";position:absolute;left:-1px;right:-1px;top:-10px;height:11px;
-  background:var(--card);border-top:1px solid var(--rule);
-  -webkit-mask:
-    linear-gradient(135deg,#000 46%,transparent 47%) 0 100%/12px 12px repeat-x,
-    linear-gradient(45deg,#000 46%,transparent 47%) 0 100%/12px 12px repeat-x;
-  mask:
-    linear-gradient(135deg,#000 46%,transparent 47%) 0 100%/12px 12px repeat-x,
-    linear-gradient(45deg,#000 46%,transparent 47%) 0 100%/12px 12px repeat-x}
-.slip label{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--muted);font-weight:700;margin-bottom:8px}
+.emptystate{padding:60px 30px;text-align:center;color:var(--faint);font-size:14px;line-height:1.5}
 
-/* amount is the centre of gravity */
-.amt{display:flex;align-items:baseline;justify-content:flex-end;gap:10px;
-  border-bottom:2px solid var(--rule);padding-bottom:6px}
-#amount{flex:1;min-width:0;border:0;outline:0;background:transparent;
-  font-size:clamp(42px,15vw,58px);font-weight:600;letter-spacing:-.02em;
-  text-align:right;padding:0;color:var(--black);line-height:1.05}
-#amount::placeholder{color:var(--muted);opacity:.5}
-.cur{flex:none;font-size:14px;font-weight:700;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--muted)}
+/* primary button */
+.submitwrap{padding:10px 22px 12px}
+.submit{width:100%;border:0;padding:15px;border-radius:14px;text-align:center;font-size:15.5px;
+  font-weight:600;min-height:50px;font-family:inherit;background:#EDE9E3;color:var(--faint)}
+.submit.ready{cursor:pointer;color:var(--on-dark)}
+.submit.ready.online{background:var(--in)} .submit.ready.offline{background:var(--warn)}
 
-/* ---------- sections & category chips ---------- */
-.sect{padding:0 18px;margin-bottom:22px}
-.sect>label{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--muted);font-weight:700;margin-bottom:9px}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{border:1px solid var(--rule);background:var(--card);color:var(--black);
-  padding:0 15px;min-height:var(--tap);font-size:15px;border-radius:2px;font-weight:500;
-  display:inline-flex;align-items:center;line-height:1.2}
-.chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
-/* the neutral "Something else" escape hatch always sits apart at the end */
-#cats .chip:last-child{margin-left:auto;border-style:dashed;color:var(--muted)}
-#cats .chip:last-child.on{color:#fff;border-style:solid}
+/* bottom tabs */
+.tabs{display:flex;background:var(--surface);padding:4px 14px calc(16px + env(safe-area-inset-bottom));gap:6px}
+.tabs button{flex:1;border:0;text-align:center;padding:11px;border-radius:10px;font-size:13px;cursor:pointer;
+  min-height:44px;color:var(--faint);background:transparent;font-family:inherit}
+.tabs button.on{color:var(--ink);font-weight:600;background:var(--muted)}
 
-input[type=text],input[type=date]{width:100%;padding:0 14px;min-height:var(--tap);
-  font-size:16px;border:1px solid var(--rule);background:var(--card);border-radius:2px;
-  outline:0;font-family:inherit;color:var(--black)}
-input[type=date]{padding-top:11px;padding-bottom:11px}
-input:focus{border-color:var(--accent)}
+/* history */
+.figs{display:flex;gap:22px;padding:0 4px 18px}
+.fig .k{font-size:11px;color:var(--dim)} .fig .v{font-size:18px;margin-top:2px}
+.hist{padding:0 18px 26px}
+.hrow{padding:14px 4px;border-top:1px solid var(--hairline);display:flex;gap:12px;align-items:flex-start}
+.tile{width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;font-size:14px}
+.tile.out{background:var(--out-tint);color:var(--out)} .tile.in{background:var(--in-tint);color:var(--in)}
+.hrow .top{display:flex;justify-content:space-between;gap:10px}
+.hrow .cat{font-size:14px;font-weight:500}
+.hrow .amt{font-size:14px;white-space:nowrap} .hrow .amt.out{color:var(--out)} .hrow .amt.in{color:var(--in)}
+.hrow .desc{font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:2px;text-wrap:pretty}
+.hrow .meta{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;font-size:11.5px;color:var(--faint)}
+.badge{font-size:11px;padding:2px 8px;border-radius:99px}
+.badge.sent{background:var(--muted);color:var(--dim)} .badge.pending{background:var(--warn-tint);color:var(--warn-ink)}
 
-/* visible focus that survives full sun — gold outline is a marker, not text */
-input:focus-visible,.chip:focus-visible,.who button:focus-visible,
-.toggle button:focus-visible,summary:focus-visible,#save:focus-visible{
-  outline:3px solid var(--gold);outline-offset:2px}
+/* sheets */
+.backdrop{position:fixed;inset:0;background:rgba(28,25,23,.35);display:flex;align-items:flex-end;z-index:20}
+.sheet{width:100%;background:var(--surface);border-radius:20px 20px 0 0;
+  padding:20px 18px calc(24px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;
+  max-height:78vh;overflow:auto}
+.sheet h2{margin:0;font-size:17px;font-weight:600}
+.sheet .sub{font-size:12.5px;color:var(--dim);margin-top:-6px}
+.opt{display:flex;align-items:center;gap:10px;padding:13px 14px;border-radius:12px;font-size:15px;cursor:pointer;
+  min-height:50px;border:1px solid var(--border);background:var(--raised);font-family:inherit;text-align:left;width:100%}
+.opt.sel{border-color:var(--ink);background:var(--selected)}
+.opt .grow{flex:1;min-width:0}
+.opt .code{font-size:11.5px;color:var(--faint)}
+.opt .ck{font-size:14px;color:var(--in);opacity:0} .opt.sel .ck{opacity:1}
+.done{border:0;padding:14px;border-radius:14px;background:var(--ink);color:var(--on-dark);text-align:center;
+  font-size:15px;font-weight:500;min-height:48px;cursor:pointer;font-family:inherit}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.keypad button{padding:15px;border-radius:12px;background:var(--raised);border:1px solid var(--border);
+  text-align:center;font-size:19px;cursor:pointer;min-height:52px;user-select:none;font-family:'IBM Plex Mono',monospace}
+.keypad button.del{background:var(--muted)}
+.kamt{display:flex;align-items:baseline;justify-content:space-between;padding:0 6px}
+.kamt .k{font-size:13px;color:var(--faint)} .kamt .v{font-size:30px;letter-spacing:-.02em}
+.notebox{border:1px solid var(--border);border-radius:12px;background:var(--raised);padding:12px 14px;
+  min-height:88px;display:flex;align-items:flex-start}
+.notebox input{width:100%;border:0;outline:0;background:transparent;font-size:15px;color:var(--ink);padding:0}
 
-details{margin:2px 18px 22px;border-top:1px solid var(--rule);padding-top:4px}
-summary{font-size:14px;color:var(--ink);font-weight:600;list-style:none;
-  padding:12px 0;min-height:var(--tap);display:flex;align-items:center;
-  justify-content:space-between;cursor:pointer}
-summary::-webkit-details-marker{display:none}
-summary::after{content:"+";font-weight:700;font-size:18px;color:var(--muted)}
-details[open] summary::after{content:"\2013"}
-details .sect{padding:0;margin-top:16px}
+/* toast */
+.toast{position:fixed;left:16px;right:16px;bottom:calc(24px + env(safe-area-inset-bottom));
+  max-width:488px;margin:0 auto;padding:13px 16px;border-radius:12px;background:var(--ink);color:var(--on-dark);
+  font-size:13px;line-height:1.4;box-shadow:0 12px 30px rgba(28,25,23,.30);z-index:30}
 
-/* ---------- validation bar ---------- */
-.bar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--card);
-  border-top:1px solid var(--rule);
-  padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:flex;gap:14px;align-items:stretch}
-.bar .echo{flex:1;min-width:0;align-self:center;font-size:12.5px;color:var(--muted);line-height:1.3}
-.bar .echo b{color:var(--black);font-size:20px;display:block;letter-spacing:-.01em}
-#save{border:0;background:var(--accent);color:#fff;font-size:16px;font-weight:700;
-  padding:0 26px;min-height:56px;min-width:132px;border-radius:2px;letter-spacing:.01em}
-#save:active{transform:translateY(1px)}
-#save:disabled{background:#B9C2CA}
-
-/* ---------- confirmation ---------- */
-.done{position:fixed;inset:0;z-index:10;background:var(--paper);display:none;flex-direction:column;
-  align-items:center;justify-content:center;gap:16px;
-  padding:30px calc(30px + env(safe-area-inset-right)) 30px calc(30px + env(safe-area-inset-left))}
-.done.show{display:flex}
-.tick{width:72px;height:72px;border-radius:50%;background:var(--green-soft);display:flex;
-  align-items:center;justify-content:center;font-size:34px;color:var(--green);position:relative}
-/* queued state: hide the JS glyph, draw a plain clock (no emoji) */
-.tick.q{background:var(--gold-soft);color:#8A6D0B;font-size:0}
-.tick.q::after{content:"";width:26px;height:26px;border:3px solid currentColor;border-radius:50%}
-.tick.q::before{content:"";position:absolute;width:3px;height:9px;background:currentColor;
-  border-radius:2px;transform:translateY(-4px)}
-.done h2{font-size:22px;color:var(--ink)}
-.done p{color:var(--muted);font-size:14.5px;text-align:center;line-height:1.55;max-width:30ch}
-.done code{font-family:ui-monospace,Menlo,monospace;background:var(--gold-soft);padding:3px 8px;
-  border-radius:2px;color:var(--ink);font-size:13px;font-weight:600}
-
-/* ---------- error ---------- */
-.err{margin:14px 18px 0;padding:12px 14px;background:#FBE3E5;border:1px solid #E4A9AE;
-  border-left:5px solid var(--red);color:#8C1F27;font-size:14px;border-radius:2px;
-  display:none;font-weight:500}
-.err.show{display:block}
-
-/* ---------- reduced motion ---------- */
-@media (prefers-reduced-motion:reduce){
-  *{scroll-behavior:auto !important;animation:none !important;transition:none !important}
-  #save:active{transform:none}
-}
-
-/* ---------- dark mode, same charte ---------- */
-@media (prefers-color-scheme:dark){
-  :root{
-    --paper:#0E1621; --card:#16212E; --black:#EAF0F6;
-    --rule:#2C3A4A; --muted:#93A2B2;
-    --gold-soft:#2A2410; --green-soft:#14261C;
-  }
-  .toggle button.on{color:#DCE6F0}
-  .toggle button.on.in{color:#7FD0A2}
-  .net.queued{color:var(--gold)}
-  .done code{color:#F5D97A}
+/* ============================ desktop ============================ */
+.win{display:none}
+@media (min-width:900px){
+  body{padding:40px 20px}
+  .shell{display:none}
+  .win{display:block;width:100%;max-width:1160px;margin:0 auto;border-radius:14px;background:var(--surface);
+    border:1px solid var(--border-strong);box-shadow:0 26px 70px rgba(28,25,23,.14);overflow:hidden;position:relative}
+  .titlebar{display:flex;align-items:center;gap:9px;padding:11px 16px;background:var(--muted);border-bottom:1px solid var(--border-strong)}
+  .titlebar .dots{display:flex;gap:6px}
+  .titlebar .dots span{width:11px;height:11px;border-radius:50%;display:block}
+  .titlebar .cap{flex:1;text-align:center;font-size:12px;color:var(--faint)}
+  .whead{display:flex;align-items:center;justify-content:space-between;padding:18px 28px 16px;border-bottom:1px solid var(--hairline)}
+  .whead .title{font-size:20px;font-weight:600;letter-spacing:-.01em}
+  .whead .right{display:flex;align-items:center;gap:22px}
+  .whead .fig{text-align:right}
+  .body{display:grid;grid-template-columns:400px 1fr;min-height:560px}
+  .left{border-right:1px solid var(--hairline);padding:26px 28px;display:flex;flex-direction:column;gap:24px}
+  .left .rows{padding:0;margin-top:0}
+  .damount{display:flex;align-items:baseline;gap:8px}
+  .damount input{border:0;outline:0;background:transparent;padding:0;width:220px;
+    font-family:'IBM Plex Mono',monospace;font-size:42px;letter-spacing:-.03em;color:var(--place)}
+  .damount input.out{color:var(--out)} .damount input.in{color:var(--in)}
+  .damount .cur{font-size:15px;color:var(--faint)}
+  .ledger{padding:22px 28px 30px;overflow:auto}
+  .lhead,.lrow{display:grid;grid-template-columns:26px 1fr 2.2fr .9fr .7fr .9fr;gap:14px;align-items:center}
+  .lhead{padding:0 4px 10px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+  .lrow{padding:13px 4px;border-top:1px solid var(--hairline)}
+  .lrow .lcat{font-size:13.5px;font-weight:500}
+  .lrow .lfor,.lrow .lsrc{font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lrow .lamt{font-size:14px;white-space:nowrap;text-align:right}
+  .lrow .lamt.out{color:var(--out)} .lrow .lamt.in{color:var(--in)}
+  .tiledot{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:13px}
+  .tiledot.out{background:var(--out-tint);color:var(--out)} .tiledot.in{background:var(--in-tint);color:var(--in)}
+  .dialog-back{position:fixed;inset:0;background:rgba(28,25,23,.35);display:flex;align-items:center;
+    justify-content:center;padding:24px;z-index:20}
+  .dialog{width:420px;max-height:80vh;overflow:auto;background:var(--surface);border-radius:18px;padding:22px;
+    display:flex;flex-direction:column;gap:10px;box-shadow:0 30px 80px rgba(28,25,23,.30)}
+  .dtoast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%);padding:13px 20px;border-radius:12px;
+    background:var(--ink);color:var(--on-dark);font-size:13px;z-index:30;box-shadow:0 12px 30px rgba(28,25,23,.30)}
 }
 </style>
 </head>
 <body>
 
-<div class="top">
-  <div class="row">
-    <span class="brand">DiDreams</span>
-    <div class="who" id="who">
-      <button data-p="Danielle">Danielle</button>
-      <button data-p="Monique">Monique</button>
-    </div>
-  </div>
-  <div class="net" id="net"></div>
-  <div class="toggle">
-    <button id="tOut" class="on">Money out</button>
-    <button id="tIn">Money in</button>
-  </div>
-</div>
-
-<div class="slip">
-  <label>Amount</label>
-  <div class="amt">
-    <input id="amount" class="mono" inputmode="numeric" placeholder="0">
-    <span class="cur">FCFA</span>
-  </div>
-</div>
-
-<div class="err" id="err"></div>
-
-<div class="sect"><label>What was it?</label><div class="chips" id="cats"></div></div>
-<div class="sect"><label>Money came from / went to</label><div class="chips" id="srcs"></div></div>
-<div class="sect"><label>What was it for?</label><input type="text" id="desc" placeholder="A few words"></div>
-
-<details>
-  <summary>More details</summary>
-  <div class="sect"><label>Date</label><input type="date" id="date"></div>
-  <div class="sect"><label>Who was paid, or who paid us?</label><input type="text" id="party" placeholder="Optional"></div>
-  <div class="sect"><label>Activity</label><div class="chips" id="acts"></div></div>
-  <div class="sect"><label>Receipt reference</label><input type="text" id="receipt" placeholder="Optional"></div>
-</details>
-
-<div class="bar">
-  <div class="echo"><b id="echoAmt" class="mono">—</b><span id="echoCat">Pick a category</span></div>
-  <button id="save">Record</button>
-</div>
-
-<div class="done" id="done">
-  <div class="tick" id="tick">✓</div>
-  <h2 id="doneTtl">Recorded</h2>
-  <p id="doneMsg"></p>
-</div>
+<div id="app"></div>
 
 <script>
 /* ============================================================
@@ -229,204 +191,449 @@ var ENDPOINT = 'https://script.google.com/macros/s/AKfycbzD98s84YJhCYt6cZPoj7eLh
 var TOKEN    = 'dd-7Kq2mXv9Rt4LpZ8w';   // must match PWA_TOKEN in Form.gs
 /* ========================================================== */
 
-var CATS = {
-  OUT: [
-    ['Rent','6222','COMMON','OUT'],
-    ['Electricity','6052','COMMON','OUT'],
-    ['Water','6051','COMMON','OUT'],
-    ['Internet / CAMTEL','6281','MARKETING','OUT'],
-    ['Office supplies','6055','OFFICE','OUT'],
-    ['Cleaning','6241','COMMON','OUT'],
-    ['Transport / taxi','614','COMMON','OUT'],
-    ['Freelance work','6057','MARKETING','OUT'],
-    ['Salary','6611','COMMON','OUT'],
-    ['Bank / MoMo fees','6318','COMMON','OUT'],
-    ['Tax / stamps','6418','COMMON','OUT'],
-    ['Repay the director','4621','COMMON','TRF'],
-    ['Something else','','COMMON','OUT']
-  ],
-  IN: [
-    ['Marketing client','706','MARKETING','IN'],
-    ['Printing / copies','706','OFFICE','IN'],
-    ['Something else','','COMMON','IN']
-  ]
+/* -------- reference data (verbatim from the handoff) -------- */
+var OUT_CATS = [
+  { label:"Rent", account:"6132", activity:"Shared" },
+  { label:"Electricity", account:"6051", activity:"Shared" },
+  { label:"Water", account:"6052", activity:"Shared" },
+  { label:"Internet / CAMTEL", account:"6262", activity:"Office" },
+  { label:"Supplies", account:"6047", activity:"Office" },
+  { label:"Transport", account:"6241", activity:"Marketing" },
+  { label:"Salary", account:"6611", activity:"Shared" },
+  { label:"Bank fees", account:"6311", activity:"Shared" },
+  { label:"Something else", account:"6588", activity:"Shared" }
+];
+var IN_CATS = [
+  { label:"Client marketing", account:"7061", activity:"Marketing" },
+  { label:"Printing / copies", account:"7062", activity:"Office" },
+  { label:"Something else", account:"7588", activity:"Shared" }
+];
+var SOURCES = ["Cash box", "UBA account", "MoMo", "Director's bank", "Orange Money", "CEO"];
+
+/* map the design's labels onto the codes the Apps Script backend expects */
+var ACT_MAP = { Shared:"COMMON", Office:"OFFICE", Marketing:"MARKETING" };
+var SRC_MAP = { "Cash box":"CASH", "UBA account":"UBA", "MoMo":"COY-OM",
+  "Director's bank":"DIR-BANK", "Orange Money":"DIR-OM", "CEO":"CEO-ADV" };
+
+/* -------- state -------- */
+var state = {
+  screen:"entry", direction:"out", digits:"", category:null, source:null, description:"",
+  sheet:null, picker:null, user:"Danielle", history:[], focus:null
 };
-var SRCS = [['Petty cash','CASH'],['UBA account','UBA'],['Company MoMo','COY-OM'],
-            ['My bank','DIR-BANK'],['My Orange Money','DIR-OM']];
-var ACTS = [['Office','OFFICE'],['Marketing','MARKETING'],['Shared','COMMON']];
 
-var dir='OUT', cat=null, src=null, act=null, actTouched=false, person=null;
-function el(i){return document.getElementById(i);}
-function fmt(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' ');}
+function el(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function fmt(d){ return d ? Number(d).toLocaleString("fr-FR").replace(/ | /g," ") : "0"; }
+
+/* -------- persistence -------- */
 function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k);
-  localStorage.setItem(k,v);}catch(e){return null;} }
+  localStorage.setItem(k,v);}catch(e){ return null; } }
+function loadHistory(){ try{ return JSON.parse(localStorage.getItem("cl_history")||"[]"); }catch(e){ return []; } }
+function saveHistory(){ try{ localStorage.setItem("cl_history",JSON.stringify(state.history)); }catch(e){} }
+function queue(){ try{ return JSON.parse(localStorage.getItem("cl_queue")||"[]"); }catch(e){ return []; } }
+function setQueue(q){ try{ localStorage.setItem("cl_queue",JSON.stringify(q)); }catch(e){} }
 
-/* ---------- offline queue ---------- */
-function queue(){ try{ return JSON.parse(localStorage.getItem('dd_queue')||'[]'); }
-  catch(e){ return []; } }
-function setQueue(q){ try{ localStorage.setItem('dd_queue',JSON.stringify(q)); }catch(e){} }
-
+/* -------- backend -------- */
 function send(payload){
-  return fetch(ENDPOINT, {
-    method:'POST',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify(payload)
-  }).then(function(r){ return r.json(); });
+  return fetch(ENDPOINT,{ method:"POST",
+    headers:{ "Content-Type":"text/plain;charset=utf-8" },
+    body:JSON.stringify(payload) }).then(function(r){ return r.json(); });
 }
-
 function flush(){
   var q = queue();
-  if(!q.length || !navigator.onLine) { banner(); return; }
+  if(!q.length || !navigator.onLine) return;
   var next = q[0];
   send(next).then(function(res){
     if(res && res.ok){
       var rest = queue(); rest.shift(); setQueue(rest);
-      banner(); flush();
+      // mark the matching pending history row as sent
+      state.history.forEach(function(h){ if(h.cid===next.cid) h.sync="Sent"; });
+      saveHistory();
+      var remaining = queue().length;
+      if(!remaining){ toast(q.length + (q.length>1?" entries":" entry") + " sent to the Google Sheet ✓"); }
+      render();
+      flush();
     }
-  }).catch(function(){ banner(); });
+  }).catch(function(){});
 }
 
-function banner(){
-  var n = el('net'), q = queue().length;
-  n.className = 'net';
-  if(!navigator.onLine){
-    n.className='net off';
-    n.textContent = q ? ('Offline — ' + q + ' entr' + (q>1?'ies':'y') + ' waiting to send')
-                      : 'Offline — entries will be saved and sent later';
-  } else if(q){
-    n.className='net queued';
-    n.textContent = q + ' entr' + (q>1?'ies':'y') + ' waiting to send…';
-  }
-}
+/* -------- helpers -------- */
+var _toast=null;
+function toast(text){ clearTimeout(_toast); state.toast=text; render();
+  _toast=setTimeout(function(){ state.toast=null; render(); },2600); }
 
-window.addEventListener('online', function(){ banner(); flush(); });
-window.addEventListener('offline', banner);
+function cats(){ return state.direction==="out" ? OUT_CATS : IN_CATS; }
+function currentCat(){ var l=state.category; return cats().filter(function(c){return c.label===l;})[0]; }
+function ready(){ return state.digits && state.category && state.source && state.description.trim(); }
 
-/* ---------- ui ---------- */
-function chips(id, list, pick){
-  var box = el(id); box.innerHTML='';
-  list.forEach(function(row){
-    var b=document.createElement('button');
-    b.className='chip'; b.type='button'; b.textContent=row[0];
-    b.onclick=function(){
-      [].forEach.call(box.children,function(x){x.classList.remove('on');});
-      b.classList.add('on'); pick(row);
-    };
-    box.appendChild(b);
+function todayTotals(){
+  var out=0, inn=0, today=new Date().toDateString();
+  state.history.forEach(function(h){
+    if(new Date(h.ts).toDateString()!==today) return;
+    if(h.dir==="out") out+=Number(h.raw||0); else inn+=Number(h.raw||0);
   });
+  return { out:out, inn:inn };
 }
 
-function cats(){
-  cat=null; actTouched=false;
-  chips('cats', CATS[dir], function(row){
-    cat=row;
-    if(!actTouched){
-      act=null;
-      [].forEach.call(el('acts').children,function(x,i){
-        x.classList.toggle('on', ACTS[i][1]===row[2]);
-        if(ACTS[i][1]===row[2]) act=ACTS[i];
-      });
-    }
-    echo();
-  });
-  echo();
-}
+/* -------- actions -------- */
+function setDirection(dir){ return function(){
+  var keep = (dir==="out"?OUT_CATS:IN_CATS).some(function(c){return c.label===state.category;});
+  state.direction=dir; if(!keep) state.category=null; render();
+}; }
+function press(k){ return function(){
+  if(k==="←"){ state.digits=state.digits.slice(0,-1); }
+  else if(k==="000"){ state.digits = state.digits ? (state.digits+"000").slice(0,9) : state.digits; }
+  else { state.digits = (state.digits+k).replace(/^0+/,"").slice(0,9); }
+  render();
+}; }
 
-function setDir(d){
-  dir=d;
-  el('tOut').className = d==='OUT'?'on':'';
-  el('tIn').className  = d==='IN'?'on in':'';
-  document.body.classList.toggle('in', d==='IN');
-  cats();
-}
-el('tOut').onclick=function(){setDir('OUT');};
-el('tIn').onclick =function(){setDir('IN');};
+function submit(){
+  if(!ready()) return;
+  var cat = currentCat();
+  var raw = state.digits;
+  var online = navigator.onLine;
+  var now = new Date();
+  var cid = "cl-" + now.getTime() + "-" + Math.random().toString(36).slice(2,7);
+  var hh = ("0"+now.getHours()).slice(-2)+":"+("0"+now.getMinutes()).slice(-2);
 
-el('amount').addEventListener('input',function(){
-  var raw=this.value.replace(/[^0-9]/g,'');
-  this.value = raw?fmt(raw):'';
-  echo();
-});
-
-function echo(){
-  var raw=el('amount').value.replace(/[^0-9]/g,'');
-  el('echoAmt').textContent = raw ? fmt(raw)+' F' : '—';
-  el('echoCat').textContent = cat ? cat[0]+(src?' · '+src[0]:'') : 'Pick a category';
-}
-
-function fail(m){ var e=el('err'); e.textContent=m; e.classList.add('show');
-  window.scrollTo({top:0,behavior:'smooth'}); }
-
-function finish(queued, ref){
-  el('tick').className = queued ? 'tick q' : 'tick';
-  el('tick').textContent = queued ? '⏳' : '✓';
-  el('doneTtl').textContent = queued ? 'Saved on this phone' : 'Recorded';
-  el('doneMsg').innerHTML = queued
-    ? 'No connection right now.<br>It will be sent by itself once you are back online.'
-    : 'Saved as <code>' + ref + '</code><br>Monique will check it before it counts.';
-  el('done').classList.add('show');
-  setTimeout(function(){ location.reload(); }, 2400);
-}
-
-el('save').onclick=function(){
-  el('err').classList.remove('show');
-  var raw=el('amount').value.replace(/[^0-9]/g,'');
-  if(!raw)  return fail('Enter an amount.');
-  if(!cat)  return fail('Pick a category.');
-  if(!src)  return fail('Say where the money came from or went to.');
-  if(!el('desc').value.trim()) return fail('Say what it was for.');
-
-  var payload = {
-    token: TOKEN,
-    amount: raw,
-    type: cat[3],
-    account: cat[1],
-    activity: act ? act[1] : cat[2],
-    category: cat[0],
-    source: src[1],
-    description: el('desc').value.trim(),
-    counterparty: el('party').value.trim(),
-    receipt: el('receipt').value.trim(),
-    date: el('date').value,
-    person: person || 'unknown'
+  var entry = {
+    cid:cid, dir:state.direction, category:state.category,
+    raw:raw, amount:(state.direction==="out"?"−":"+")+fmt(raw),
+    description:state.description.trim(), source:state.source, user:state.user,
+    meta:state.user+" · "+hh+" · "+state.source, ts:now.toISOString(),
+    sync: online ? "Sent" : "Pending"
   };
 
-  el('save').disabled=true; el('save').textContent='Saving…';
+  var payload = {
+    token:TOKEN, amount:raw, type:state.direction==="out"?"OUT":"IN",
+    account:cat.account, activity:ACT_MAP[cat.activity]||cat.activity, category:cat.label,
+    source:SRC_MAP[state.source]||state.source, description:state.description.trim(),
+    counterparty:"", receipt:"",
+    date:now.getFullYear()+"-"+("0"+(now.getMonth()+1)).slice(-2)+"-"+("0"+now.getDate()).slice(-2),
+    person:state.user, cid:cid
+  };
 
-  if(!navigator.onLine){
-    var q=queue(); q.push(payload); setQueue(q); banner(); finish(true); return;
+  state.history.unshift(entry); saveHistory();
+  // clear amount/category/source/note; keep direction and user
+  state.digits=""; state.category=null; state.source=null; state.description=""; state.sheet=null; state.picker=null;
+
+  if(!online){
+    var q=queue(); q.push(payload); setQueue(q);
+    toast("Kept on this phone — will go out when the network is back");
+    return;
   }
-
+  render();
   send(payload).then(function(res){
-    if(res && res.ok){ finish(false, res.ref); }
+    if(res && res.ok){ toast("Sent to the Google Sheet ✓"); }
     else {
-      el('save').disabled=false; el('save').textContent='Record';
-      fail((res && res.message) || 'Refused by the server.');
+      // server refused — keep it locally as pending so nothing is lost
+      var q=queue(); q.push(payload); setQueue(q);
+      state.history.forEach(function(h){ if(h.cid===cid) h.sync="Pending"; }); saveHistory();
+      toast((res && res.message) || "Refused by the server — kept on this phone");
+      render();
     }
   }).catch(function(){
-    var q=queue(); q.push(payload); setQueue(q); banner(); finish(true);
+    var q=queue(); q.push(payload); setQueue(q);
+    state.history.forEach(function(h){ if(h.cid===cid) h.sync="Pending"; }); saveHistory();
+    toast("No connection — kept on this phone");
+    render();
   });
-};
+}
 
-/* ---------- boot ---------- */
-(function(){
-  var d=new Date();
-  el('date').value = d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
-  chips('srcs', SRCS, function(v){ src=v; echo(); });
-  chips('acts', ACTS, function(v){ act=v; actTouched=true; });
-  cats();
-  person = ls('dd_person');
-  [].forEach.call(el('who').children,function(b){
-    if(b.dataset.p===person) b.classList.add('on');
-    b.onclick=function(){
-      [].forEach.call(el('who').children,function(x){x.classList.remove('on');});
-      b.classList.add('on'); person=b.dataset.p; ls('dd_person',person);
-    };
-  });
-  banner(); flush();
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').catch(function(){});
+/* -------- shared fragments -------- */
+function avatarHTML(name,big){
+  var sz = big?34:26, fs = big?13:11;
+  var bg = name==="Danielle" ? "#DDD3C4" : "#CFD9CB";
+  return '<span class="avatar" style="width:'+sz+'px;height:'+sz+'px;font-size:'+fs+'px;background:'+bg+'">'+esc(name[0])+'</span>';
+}
+function bandHTML(){
+  var q = queue().length;
+  if(navigator.onLine && q===0) return "";
+  if(!navigator.onLine)
+    return '<div class="band off"><span class="dot"></span>Offline — entries are kept on this phone</div>';
+  return '<div class="band queued"><span class="dot"></span>'+q+(q>1?" entries":" entry")+' waiting to be sent</div>';
+}
+function fieldsHTML(){
+  var out = state.direction==="out";
+  var catVal = state.category
+    ? '<span class="val">'+esc(state.category)+'</span>'
+    : '<span class="val empty">Choose</span>';
+  var srcVal = state.source
+    ? '<span class="val">'+esc(state.source)+'</span>'
+    : '<span class="val empty">Choose</span>';
+  var noteVal = state.description
+    ? '<span class="val">'+esc(state.description)+'</span>'
+    : '<span class="val empty">Add a note</span>';
+  return ''+
+    '<button class="row" data-act="picker" data-p="category"><span class="lbl">What was it?</span>'+catVal+'<span class="chev">›</span></button>'+
+    '<button class="row" data-act="picker" data-p="source"><span class="lbl">'+(out?"Out of":"Into")+'</span>'+srcVal+'<span class="chev">›</span></button>'+
+    '<button class="row" data-act="note"><span class="lbl">For what</span>'+noteVal+'<span class="chev">›</span></button>';
+}
+function derivedHTML(cls){
+  var c = currentCat(); if(!c) return "";
+  return '<div class="'+cls+'">Account '+esc(c.account)+' · '+esc(c.activity)+' — added for you</div>';
+}
+function submitHTML(){
+  var r = ready(), online = navigator.onLine;
+  var cls = "submit" + (r ? " ready "+(online?"online":"offline") : "");
+  var label = r ? (online?"Save to the Sheet":"Save on this phone") : "Complete the entry";
+  return '<button class="'+cls+'" data-act="submit">'+label+'</button>';
+}
+
+/* -------- mobile screens -------- */
+function entryHTML(){
+  var out = state.direction==="out";
+  var bigCls = "big"+(state.digits?(out?" out":" in"):"");
+  return ''+
+    '<div class="scroll">'+
+      '<div class="amountwrap">'+
+        '<div class="seg">'+
+          '<button class="'+(out?"on":"")+'" data-act="dir" data-p="out">Money out</button>'+
+          '<button class="'+(!out?"on":"")+'" data-act="dir" data-p="in">Money in</button>'+
+        '</div>'+
+        '<button class="amount" data-act="keypad">'+
+          '<span class="'+bigCls+' mono">'+esc(fmt(state.digits))+'</span>'+
+          '<span class="cur mono">FCFA</span>'+
+        '</button>'+
+        '<div class="hint">Tap the amount to type it</div>'+
+      '</div>'+
+      '<div class="rows">'+fieldsHTML()+'</div>'+
+      derivedHTML("derived")+
+    '</div>'+
+    '<div class="submitwrap">'+submitHTML()+'</div>';
+}
+function historyHTML(){
+  var t = todayTotals();
+  var body;
+  if(!state.history.length){
+    body = '<div class="emptystate">No entries yet on this phone.<br>Record one from the New entry tab.</div>';
+  } else {
+    body = '<div class="hist">'+
+      '<div class="figs">'+
+        '<div class="fig"><div class="k">Out today</div><div class="v mono" style="color:var(--out)">−'+esc(fmt(t.out))+'</div></div>'+
+        '<div class="fig"><div class="k">In today</div><div class="v mono" style="color:var(--in)">+'+esc(fmt(t.inn))+'</div></div>'+
+      '</div>'+
+      state.history.map(function(h){
+        var oc = h.dir==="out";
+        return '<div class="hrow">'+
+          '<div class="tile '+(oc?"out":"in")+'">'+(oc?"↑":"↓")+'</div>'+
+          '<div style="flex:1;min-width:0">'+
+            '<div class="top"><span class="cat">'+esc(h.category)+'</span>'+
+              '<span class="amt '+(oc?"out":"in")+' mono">'+esc(h.amount)+'</span></div>'+
+            '<div class="desc">'+esc(h.description)+'</div>'+
+            '<div class="meta"><span>'+esc(h.meta)+'</span>'+
+              '<span class="badge '+(h.sync==="Sent"?"sent":"pending")+'">'+esc(h.sync)+'</span></div>'+
+          '</div>'+
+        '</div>';
+      }).join("")+
+    '</div>';
   }
+  return '<div class="scroll">'+body+'</div>';
+}
+function mobileHTML(){
+  var entry = state.screen==="entry";
+  return '<div class="shell">'+
+    bandHTML()+
+    '<div class="head'+(navigator.onLine&&queue().length===0?" safe":"")+'">'+
+      '<div class="date">'+esc(dateLabel())+'</div>'+
+      '<button class="userchip" data-act="users">'+avatarHTML(state.user,false)+'<span class="name">'+esc(state.user)+'</span></button>'+
+    '</div>'+
+    (entry?entryHTML():historyHTML())+
+    '<div class="tabs">'+
+      '<button class="'+(entry?"on":"")+'" data-act="screen" data-p="entry">New entry</button>'+
+      '<button class="'+(!entry?"on":"")+'" data-act="screen" data-p="history">History</button>'+
+    '</div>'+
+    sheetsHTML()+
+  '</div>';
+}
+
+/* -------- desktop -------- */
+function desktopHTML(){
+  var out = state.direction==="out";
+  var t = todayTotals();
+  var ledger = state.history.length
+    ? state.history.map(function(h){
+        var oc=h.dir==="out";
+        return '<div class="lrow">'+
+          '<div class="tiledot '+(oc?"out":"in")+'">'+(oc?"↑":"↓")+'</div>'+
+          '<div class="lcat">'+esc(h.category)+'</div>'+
+          '<div class="lfor">'+esc(h.description)+'</div>'+
+          '<div class="lsrc">'+esc(h.source)+'</div>'+
+          '<div><span class="badge '+(h.sync==="Sent"?"sent":"pending")+'">'+esc(h.sync)+'</span></div>'+
+          '<div class="lamt '+(oc?"out":"in")+' mono">'+esc(h.amount)+'</div>'+
+        '</div>';
+      }).join("")
+    : '<div class="emptystate">No entries yet.</div>';
+
+  return '<div class="win">'+
+    '<div class="titlebar"><div class="dots">'+
+      '<span style="background:#D9C3BC"></span><span style="background:#E2D6BC"></span><span style="background:#C7D4C2"></span>'+
+    '</div><div class="cap">cashlog.app — installed as an app</div></div>'+
+    bandHTML()+
+    '<div class="whead">'+
+      '<div><div class="date">'+esc(dateLabel())+'</div><div class="title">Cash log</div></div>'+
+      '<div class="right">'+
+        '<div class="fig"><div class="k" style="font-size:11px;color:var(--dim)">Out today</div><div class="mono" style="font-size:17px;color:var(--out)">−'+esc(fmt(t.out))+'</div></div>'+
+        '<div class="fig"><div class="k" style="font-size:11px;color:var(--dim)">In today</div><div class="mono" style="font-size:17px;color:var(--in)">+'+esc(fmt(t.inn))+'</div></div>'+
+        '<button class="userchip" data-act="users">'+avatarHTML(state.user,false)+'<span class="name">'+esc(state.user)+'</span></button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="body">'+
+      '<div class="left">'+
+        '<div class="seg">'+
+          '<button class="'+(out?"on":"")+'" data-act="dir" data-p="out">Money out</button>'+
+          '<button class="'+(!out?"on":"")+'" data-act="dir" data-p="in">Money in</button>'+
+        '</div>'+
+        '<div class="damount">'+
+          '<input id="damt" class="mono '+(state.digits?(out?"out":"in"):"")+'" inputmode="numeric" value="'+esc(fmt(state.digits))+'" placeholder="0">'+
+          '<span class="cur mono">FCFA</span>'+
+        '</div>'+
+        '<div class="rows">'+fieldsHTML()+'</div>'+
+        derivedHTML("derived")+
+        submitHTML()+
+      '</div>'+
+      '<div class="ledger">'+
+        '<div class="lhead"><div></div><div>Category</div><div>What for</div><div>Source</div><div>Status</div><div style="text-align:right">Amount</div></div>'+
+        ledger+
+      '</div>'+
+    '</div>'+
+    dialogHTML()+
+  '</div>';
+}
+
+/* -------- sheets (mobile) & dialogs (desktop) share option builders -------- */
+function pickerOptionsHTML(){
+  var out = state.direction==="out";
+  var opts;
+  if(state.picker==="category"){
+    opts = cats().map(function(c){ return { label:c.label, hint:c.account, sel:state.category===c.label,
+      act:'data-act="pick" data-kind="category" data-p="'+esc(c.label)+'"' }; });
+  } else {
+    opts = SOURCES.map(function(l){ return { label:l, hint:"", sel:state.source===l,
+      act:'data-act="pick" data-kind="source" data-p="'+esc(l)+'"' }; });
+  }
+  return opts.map(function(o){
+    return '<button class="opt'+(o.sel?" sel":"")+'" '+o.act+'>'+
+      '<span class="grow">'+esc(o.label)+'</span>'+
+      (o.hint?'<span class="code mono">'+esc(o.hint)+'</span>':"")+
+      '<span class="ck">✓</span></button>';
+  }).join("");
+}
+function usersOptionsHTML(){
+  return ["Danielle","Monique"].map(function(n){
+    var sel = state.user===n;
+    return '<button class="opt'+(sel?" sel":"")+'" data-act="pickuser" data-p="'+n+'">'+
+      avatarHTML(n,true)+'<span class="grow">Mrs '+n+'</span><span class="ck">✓</span></button>';
+  }).join("");
+}
+function pickerTitle(){
+  if(state.picker==="category") return "What was it?";
+  return state.direction==="out" ? "Where did it go out from?" : "Where did it come in to?";
+}
+function noteBoxHTML(){
+  return '<div class="notebox"><input id="note" value="'+esc(state.description)+'" placeholder="e.g. ENEO electricity bill for August"></div>';
+}
+
+function sheetsHTML(){
+  var s = state.sheet; if(!s) return "";
+  var inner;
+  if(s==="keypad"){
+    inner = '<div class="kamt"><span class="k">Amount</span><span class="v mono">'+esc(fmt(state.digits))+'</span></div>'+
+      '<div class="keypad">'+
+        ["1","2","3","4","5","6","7","8","9","000","0","←"].map(function(k){
+          return '<button class="'+(k==="←"?"del":"")+'" data-act="key" data-p="'+esc(k)+'">'+esc(k)+'</button>';
+        }).join("")+
+      '</div>'+
+      '<button class="done" data-act="close">Done</button>';
+  } else if(s==="picker"){
+    inner = '<h2>'+esc(pickerTitle())+'</h2>'+pickerOptionsHTML();
+  } else if(s==="note"){
+    inner = '<h2>What was it for?</h2>'+noteBoxHTML()+
+      '<div class="sub">Written as-is into the Google Sheet.</div>'+
+      '<button class="done" data-act="close">Done</button>';
+  } else if(s==="users"){
+    inner = '<h2>Who is entering?</h2><div class="sub">Remembered on this phone.</div>'+usersOptionsHTML();
+  }
+  return '<div class="backdrop" data-act="backdrop"><div class="sheet" data-act="stop">'+inner+'</div></div>';
+}
+
+/* desktop keypad is not used — amount is typed; note/picker/users become dialogs */
+function dialogHTML(){
+  var s = state.sheet; if(!s || s==="keypad") return "";
+  var title, inner;
+  if(s==="picker"){ title = pickerTitle(); inner = pickerOptionsHTML(); }
+  else if(s==="note"){ title = "What was it for?"; inner = noteBoxHTML()+
+    '<div class="sub">Written as-is into the Google Sheet.</div><button class="done" data-act="close">Done</button>'; }
+  else if(s==="users"){ title = "Who is entering?"; inner = '<div class="sub">Remembered on this phone.</div>'+usersOptionsHTML(); }
+  return '<div class="dialog-back" data-act="backdrop"><div class="dialog" data-act="stop"><h2>'+esc(title)+'</h2>'+inner+'</div></div>';
+}
+
+/* -------- toast -------- */
+function toastHTML(desktop){
+  if(!state.toast) return "";
+  return '<div class="'+(desktop?"dtoast":"toast")+'">'+esc(state.toast)+'</div>';
+}
+
+function dateLabel(){
+  var d = new Date();
+  return d.toLocaleDateString("en-GB",{ weekday:"long", day:"numeric", month:"long" });
+}
+
+/* -------- render + focus management -------- */
+function render(){
+  el("app").innerHTML = mobileHTML() + desktopHTML() + toastHTML(false) + toastHTML(true);
+  // restore focus for text inputs
+  if(state.focus==="note"){ var n=el("note"); if(n){ n.focus(); n.setSelectionRange(n.value.length,n.value.length); } }
+  if(state.focus==="damt"){ var a=el("damt"); if(a){ a.focus();
+    try{ a.setSelectionRange(a.value.length,a.value.length); }catch(e){} } }
+}
+
+/* -------- event delegation -------- */
+document.addEventListener("click", function(e){
+  var t = e.target.closest("[data-act]"); if(!t) return;
+  var act = t.getAttribute("data-act"), p = t.getAttribute("data-p");
+  if(act==="stop"){ return; }
+  switch(act){
+    case "backdrop": state.sheet=null; state.picker=null; state.focus=null; render(); break;
+    case "dir": setDirection(p)(); break;
+    case "screen": state.screen=p; render(); break;
+    case "keypad": state.sheet="keypad"; render(); break;
+    case "key": press(p)(); break;
+    case "picker": state.sheet="picker"; state.picker=p; render(); break;
+    case "note": state.sheet="note"; state.focus="note"; render(); break;
+    case "users": state.sheet="users"; render(); break;
+    case "close": state.sheet=null; state.picker=null; state.focus=null; render(); break;
+    case "pick":
+      if(t.getAttribute("data-kind")==="category") state.category=p; else state.source=p;
+      state.sheet=null; state.picker=null; render(); break;
+    case "pickuser": state.user=p; ls("cl_user",p); state.sheet=null; render(); break;
+    case "submit": submit(); break;
+  }
+});
+
+/* text inputs: update state without a disruptive full re-render on every keystroke */
+document.addEventListener("input", function(e){
+  if(e.target.id==="note"){ state.description = e.target.value; return; }
+  if(e.target.id==="damt"){
+    var v = e.target.value.replace(/\D/g,"").replace(/^0+/,"").slice(0,9);
+    state.digits = v; state.focus="damt"; render();
+  }
+});
+/* keep the note's typed value when the sheet closes */
+document.addEventListener("focusin", function(e){ if(e.target.id==="note") state.focus="note"; });
+
+/* -------- network -------- */
+window.addEventListener("online", function(){ render(); flush(); });
+window.addEventListener("offline", function(){ render(); });
+
+/* -------- boot -------- */
+(function(){
+  state.history = loadHistory();
+  var u = ls("cl_user"); if(u==="Danielle"||u==="Monique") state.user=u;
+  render();
+  flush();
+  if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
 })();
 </script>
 </body>
