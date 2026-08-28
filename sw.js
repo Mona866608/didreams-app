@@ -2,7 +2,7 @@
    Caches the app shell so the form opens with no connection at all.
    Entries themselves are queued by index.html in localStorage. */
 
-var CACHE = 'didreams-v6';
+var CACHE = 'didreams-v7';
 var SHELL = [
   'index.html',
   'manifest.json',
@@ -32,6 +32,24 @@ self.addEventListener('fetch', function (e) {
   if (url.indexOf('script.google.com') !== -1) { return; }
   if (e.request.method !== 'GET') { return; }
 
+  // The page itself (navigations) is always fetched fresh from the network so a
+  // single URL shows the latest deploy — cache is only the offline fallback.
+  var isPage = e.request.mode === 'navigate' ||
+    url.indexOf('index.html') !== -1 || /\/$/.test(new URL(url).pathname);
+  if (isPage) {
+    e.respondWith(
+      fetch(e.request).then(function (res) {
+        var copy = res.clone();
+        caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
+        return res;
+      }).catch(function () {
+        return caches.match(e.request).then(function (hit) { return hit || caches.match('index.html'); });
+      })
+    );
+    return;
+  }
+
+  // Other assets (fonts already inline, icons…): cache-first is fine.
   e.respondWith(
     caches.match(e.request).then(function (hit) {
       if (hit) { return hit; }
