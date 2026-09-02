@@ -628,6 +628,9 @@ document.addEventListener("focusin", function(e){ if(e.target.id==="note") state
 /* -------- network -------- */
 window.addEventListener("online", function(){ render(); flush(); });
 window.addEventListener("offline", function(){ render(); });
+/* keep retrying a queued entry on its own — no reload needed */
+document.addEventListener("visibilitychange", function(){ if(!document.hidden) flush(); });
+window.addEventListener("focus", flush);
 
 /* -------- boot -------- */
 (function(){
@@ -635,6 +638,7 @@ window.addEventListener("offline", function(){ render(); });
   var u = ls("cl_user"); if(u==="Danielle"||u==="Monique") state.user=u;
   render();
   flush();
+  setInterval(function(){ if(navigator.onLine && queue().length) flush(); }, 15000);
   if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
 })();
 </script>
