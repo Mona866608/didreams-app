@@ -193,29 +193,33 @@ var ENDPOINT = 'https://script.google.com/macros/s/AKfycbzD98s84YJhCYt6cZPoj7eLh
 var TOKEN    = 'dd-7Kq2mXv9Rt4LpZ8w';   // must match PWA_TOKEN in Form.gs
 /* ========================================================== */
 
-/* -------- reference data (verbatim from the handoff) -------- */
+/* -------- reference data --------
+   Accounting codes, activities and source codes MUST match the deployed
+   Apps Script (WEB_CATS / WEB_SRC) and the SETUP sheet, otherwise the
+   account-name lookup returns blank ("aucun libellé"). Kept in the
+   Calm-Rows design; only the codes behind each label are the real ones. */
 var OUT_CATS = [
-  { label:"Rent", account:"6132", activity:"Shared" },
-  { label:"Electricity", account:"6051", activity:"Shared" },
-  { label:"Water", account:"6052", activity:"Shared" },
-  { label:"Internet / CAMTEL", account:"6262", activity:"Office" },
-  { label:"Supplies", account:"6047", activity:"Office" },
-  { label:"Transport", account:"6241", activity:"Marketing" },
+  { label:"Rent", account:"6222", activity:"Shared" },
+  { label:"Electricity", account:"6052", activity:"Shared" },
+  { label:"Water", account:"6051", activity:"Shared" },
+  { label:"Internet / CAMTEL", account:"6281", activity:"Marketing" },
+  { label:"Supplies", account:"6055", activity:"Office" },
+  { label:"Transport", account:"614", activity:"Shared" },
   { label:"Salary", account:"6611", activity:"Shared" },
-  { label:"Bank fees", account:"6311", activity:"Shared" },
-  { label:"Something else", account:"6588", activity:"Shared" }
+  { label:"Bank fees", account:"6318", activity:"Shared" },
+  { label:"Something else", account:"", activity:"Shared" }
 ];
 var IN_CATS = [
-  { label:"Client marketing", account:"7061", activity:"Marketing" },
-  { label:"Printing / copies", account:"7062", activity:"Office" },
-  { label:"Something else", account:"7588", activity:"Shared" }
+  { label:"Client marketing", account:"706", activity:"Marketing" },
+  { label:"Printing / copies", account:"706", activity:"Office" },
+  { label:"Something else", account:"", activity:"Shared" }
 ];
-var SOURCES = ["Cash box", "UBA account", "MoMo", "Director's bank", "Orange Money", "CEO"];
+var SOURCES = ["Cash box", "UBA account", "MoMo", "Director's bank", "Orange Money"];
 
 /* map the design's labels onto the codes the Apps Script backend expects */
 var ACT_MAP = { Shared:"COMMON", Office:"OFFICE", Marketing:"MARKETING" };
 var SRC_MAP = { "Cash box":"CASH", "UBA account":"UBA", "MoMo":"COY-OM",
-  "Director's bank":"DIR-BANK", "Orange Money":"DIR-OM", "CEO":"CEO-ADV" };
+  "Director's bank":"DIR-BANK", "Orange Money":"DIR-OM" };
 
 /* -------- state -------- */
 var state = {
