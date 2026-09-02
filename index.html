@@ -96,7 +96,7 @@ input{font-family:inherit}
 .figs{display:flex;gap:22px;padding:0 4px 18px}
 .fig .k{font-size:11px;color:var(--dim)} .fig .v{font-size:18px;margin-top:2px}
 .hist{padding:0 18px 26px}
-.hrow{padding:14px 4px;border-top:1px solid var(--hairline);display:flex;gap:12px;align-items:flex-start}
+.hrow{padding:14px 4px;border-top:1px solid var(--hairline);display:flex;gap:12px;align-items:flex-start;cursor:pointer}
 .tile{width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;font-size:14px}
 .tile.out{background:var(--out-tint);color:var(--out)} .tile.in{background:var(--in-tint);color:var(--in)}
 .hrow .top{display:flex;justify-content:space-between;gap:10px}
@@ -133,6 +133,14 @@ input{font-family:inherit}
 .notebox input{width:100%;border:0;outline:0;background:transparent;font-size:15px;color:var(--ink);padding:0}
 .notebox input::placeholder{color:var(--place);opacity:1}
 .damount input::placeholder{color:var(--place);opacity:1}
+/* delete-entry sheet */
+.entrysum{font-size:14px;color:var(--secondary);line-height:1.55}
+.entrysum b{color:var(--ink)}
+.sheetnote{font-size:12.5px;color:var(--dim);line-height:1.45}
+.delbtn{border:0;width:100%;padding:14px;border-radius:14px;background:var(--out);color:#fff;text-align:center;
+  font-size:15px;font-weight:600;min-height:48px;cursor:pointer;font-family:inherit}
+.cancelbtn{border:1px solid var(--border);width:100%;padding:13px;border-radius:14px;background:transparent;
+  color:var(--secondary);text-align:center;font-size:14.5px;font-weight:500;min-height:44px;cursor:pointer;font-family:inherit}
 
 /* toast */
 .toast{position:fixed;left:16px;right:16px;bottom:calc(24px + env(safe-area-inset-bottom));
@@ -224,7 +232,7 @@ var SRC_MAP = { "Cash box":"CASH", "UBA account":"UBA", "MoMo":"COY-OM",
 /* -------- state -------- */
 var state = {
   screen:"entry", direction:"out", digits:"", category:null, source:null, description:"",
-  sheet:null, picker:null, user:"Danielle", history:[], focus:null
+  sheet:null, picker:null, user:"Danielle", history:[], focus:null, selected:null
 };
 
 function el(id){ return document.getElementById(id); }
@@ -422,7 +430,7 @@ function historyHTML(){
       '</div>'+
       state.history.map(function(h){
         var oc = h.dir==="out";
-        return '<div class="hrow">'+
+        return '<div class="hrow" data-act="hentry" data-p="'+esc(h.cid)+'">'+
           '<div class="tile '+(oc?"out":"in")+'">'+(oc?"↑":"↓")+'</div>'+
           '<div style="flex:1;min-width:0">'+
             '<div class="top"><span class="cat">'+esc(h.category)+'</span>'+
@@ -461,7 +469,7 @@ function desktopHTML(){
   var ledger = state.history.length
     ? state.history.map(function(h){
         var oc=h.dir==="out";
-        return '<div class="lrow">'+
+        return '<div class="lrow" data-act="hentry" data-p="'+esc(h.cid)+'">'+
           '<div class="tiledot '+(oc?"out":"in")+'">'+(oc?"↑":"↓")+'</div>'+
           '<div class="lcat">'+esc(h.category)+'</div>'+
           '<div class="lfor">'+esc(h.description)+'</div>'+
@@ -541,10 +549,28 @@ function noteBoxHTML(){
   return '<div class="notebox"><input id="note" value="'+esc(state.description)+'" placeholder="e.g. ENEO electricity bill for August"></div>';
 }
 
+function entrySheetInner(){
+  var h = state.history.filter(function(x){ return x.cid===state.selected; })[0];
+  if(!h) return '<div class="sheetnote">Entry not found.</div>';
+  var oc = h.dir==="out";
+  var pending = queue().some(function(x){ return x.cid===h.cid; });
+  var note = pending
+    ? "Not sent yet — deleting cancels it, nothing reaches the Google Sheet."
+    : "Already sent to the Google Sheet. Deleting removes it here only — delete the row in the Sheet too if you need to.";
+  return '<div class="entrysum"><b>'+esc(h.category)+'</b> · '+
+      '<span class="mono" style="color:'+(oc?"var(--out)":"var(--in)")+'">'+esc(h.amount)+' F</span><br>'+
+      esc(h.description||"")+'<br>'+
+      '<span style="color:var(--faint);font-size:12.5px">'+esc(h.meta)+'</span></div>'+
+    '<div class="sheetnote">'+note+'</div>'+
+    '<button class="delbtn" data-act="del" data-p="'+esc(h.cid)+'">Delete this entry</button>'+
+    '<button class="cancelbtn" data-act="close">Cancel</button>';
+}
+
 function sheetsHTML(){
   var s = state.sheet; if(!s) return "";
   var inner;
-  if(s==="keypad"){
+  if(s==="entry"){ inner = '<h2>Entry</h2>'+entrySheetInner(); }
+  else if(s==="keypad"){
     inner = '<div class="kamt"><span class="k">Amount</span><span class="v mono">'+esc(fmt(state.digits))+'</span></div>'+
       '<div class="keypad">'+
         ["1","2","3","4","5","6","7","8","9","000","0","←"].map(function(k){
@@ -568,7 +594,8 @@ function sheetsHTML(){
 function dialogHTML(){
   var s = state.sheet; if(!s || s==="keypad") return "";
   var title, inner;
-  if(s==="picker"){ title = pickerTitle(); inner = pickerOptionsHTML(); }
+  if(s==="entry"){ title = "Entry"; inner = entrySheetInner(); }
+  else if(s==="picker"){ title = pickerTitle(); inner = pickerOptionsHTML(); }
   else if(s==="note"){ title = "What was it for?"; inner = noteBoxHTML()+
     '<div class="sub">Written as-is into the Google Sheet.</div><button class="done" data-act="close">Done</button>'; }
   else if(s==="users"){ title = "Who is entering?"; inner = '<div class="sub">Remembered on this phone.</div>'+usersOptionsHTML(); }
@@ -601,7 +628,7 @@ document.addEventListener("click", function(e){
   var act = t.getAttribute("data-act"), p = t.getAttribute("data-p");
   if(act==="stop"){ return; }
   switch(act){
-    case "backdrop": state.sheet=null; state.picker=null; state.focus=null; render(); break;
+    case "backdrop": state.sheet=null; state.picker=null; state.focus=null; state.selected=null; render(); break;
     case "dir": setDirection(p)(); break;
     case "screen": state.screen=p; render(); break;
     case "keypad": state.sheet="keypad"; render(); break;
@@ -609,12 +636,19 @@ document.addEventListener("click", function(e){
     case "picker": state.sheet="picker"; state.picker=p; render(); break;
     case "note": state.sheet="note"; state.focus="note"; render(); break;
     case "users": state.sheet="users"; render(); break;
-    case "close": state.sheet=null; state.picker=null; state.focus=null; render(); break;
+    case "close": state.sheet=null; state.picker=null; state.focus=null; state.selected=null; render(); break;
     case "pick":
       if(t.getAttribute("data-kind")==="category") state.category=p; else state.source=p;
       state.sheet=null; state.picker=null; render(); break;
     case "pickuser": state.user=p; ls("cl_user",p); state.sheet=null; render(); break;
     case "submit": submit(); break;
+    case "hentry": state.selected=p; state.sheet="entry"; render(); break;
+    case "del":
+      state.history = state.history.filter(function(h){ return h.cid!==p; });
+      setQueue(queue().filter(function(x){ return x.cid!==p; }));
+      saveHistory();
+      state.sheet=null; state.selected=null;
+      toast("Entry deleted"); render(); break;
   }
 });
 
