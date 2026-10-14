@@ -254,22 +254,39 @@ function send(payload){
     headers:{ "Content-Type":"text/plain;charset=utf-8" },
     body:JSON.stringify(payload) }).then(function(r){ return r.json(); });
 }
+var flushing = false;   // empêche deux envois simultanés de la même saisie
+ 
 function flush(){
+  if(flushing) return;
   var q = queue();
   if(!q.length || !navigator.onLine) return;
+  flushing = true;
   var next = q[0];
   send(next).then(function(res){
+    flushing = false;
+    var rest = queue();
     if(res && res.ok){
-      var rest = queue(); rest.shift(); setQueue(rest);
-      // mark the matching pending history row as sent
-      state.history.forEach(function(h){ if(h.cid===next.cid) h.sync="Sent"; });
+      rest = rest.filter(function(x){ return x.cid !== next.cid; });
+      setQueue(rest);
+      state.history.forEach(function(h){ if(h.cid === next.cid) h.sync = "Sent"; });
       saveHistory();
-      var remaining = queue().length;
-      if(!remaining){ toast(q.length + (q.length>1?" entries":" entry") + " sent to the Google Sheet ✓"); }
+      if(!rest.length){ toast(q.length + (q.length>1?" entries":" entry") + " sent to the Google Sheet ✓"); }
       render();
       flush();
+    } else {
+      // le serveur a répondu mais a refusé : on réessaie 5 fois au maximum, puis on abandonne
+      rest.forEach(function(x){ if(x.cid === next.cid){ x.tries = (x.tries || 0) + 1; } });
+      var dead = rest.filter(function(x){ return x.cid === next.cid && x.tries >= 5; });
+      if(dead.length){
+        rest = rest.filter(function(x){ return x.cid !== next.cid; });
+        state.history.forEach(function(h){ if(h.cid === next.cid) h.sync = "Refused"; });
+        saveHistory();
+        toast((res && res.message) || "Entry refused by the server");
+      }
+      setQueue(rest);
+      render();
     }
-  }).catch(function(){});
+  }).catch(function(){ flushing = false; });
 }
 
 /* -------- helpers -------- */
