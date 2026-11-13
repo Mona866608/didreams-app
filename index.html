@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cash Log</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#EFECE7">
@@ -22,7 +22,7 @@
 :root{
   --page:#EFECE7; --surface:#FBFAF8; --raised:#FFFDFB; --muted:#F1EDE7; --selected:#F4F1EC;
   --border:#E7E2DB; --border-strong:#E3DED7; --hairline:#EFEAE3;
-  --ink:#1C1917; --secondary:#57534E; --dim:#78716C; --faint:#8C837A; --place:#66605A; --chev:#857C72;
+  --ink:#1C1917; --secondary:#57534E; --dim:#78716C; --faint:#7A7169; --place:#66605A; --chev:#857C72;
   --out:#9A2C2C; --out-tint:#FBEDEC; --in:#166534; --in-tint:#E9F0E5;
   --warn:#B45309; --warn-tint:#FBF0DC; --warn-ink:#8A5A0B; --on-dark:#FBFAF8; --on-dark2:#FFF8EE;
 }
@@ -130,7 +130,7 @@ input{font-family:inherit}
 .kamt .k{font-size:13px;color:var(--faint)} .kamt .v{font-size:30px;letter-spacing:-.02em}
 .notebox{border:1px solid var(--border);border-radius:12px;background:var(--raised);padding:12px 14px;
   min-height:88px;display:flex;align-items:flex-start}
-.notebox input{width:100%;border:0;outline:0;background:transparent;font-size:15px;color:var(--ink);padding:0}
+.notebox input{width:100%;border:0;outline:0;background:transparent;font-size:16px;color:var(--ink);padding:0}
 .notebox input::placeholder{color:var(--place);opacity:1}
 .damount input::placeholder{color:var(--place);opacity:1}
 /* delete-entry sheet */
@@ -142,6 +142,11 @@ input{font-family:inherit}
 .cancelbtn{border:1px solid var(--border);width:100%;padding:13px;border-radius:14px;background:transparent;
   color:var(--secondary);text-align:center;font-size:14.5px;font-weight:500;min-height:44px;cursor:pointer;font-family:inherit}
 
+.dateinput{flex:1;min-width:0;font:inherit;font-size:16px;font-weight:500;color:var(--ink);background:transparent;
+  border:0;outline:0;padding:0;min-height:30px;-webkit-appearance:none;appearance:none;text-align:left}
+.installbtn{border:1px solid var(--border);background:var(--raised);color:var(--ink);border-radius:99px;
+  padding:7px 14px;font-size:12.5px;font-weight:500;min-height:36px;cursor:pointer;font-family:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 /* toast */
 .toast{position:fixed;left:16px;right:16px;bottom:calc(24px + env(safe-area-inset-bottom));
   max-width:488px;margin:0 auto;padding:13px 16px;border-radius:12px;background:var(--ink);color:var(--on-dark);
@@ -171,7 +176,7 @@ input{font-family:inherit}
   .damount input.out{color:var(--out)} .damount input.in{color:var(--in)}
   .damount .cur{font-size:15px;color:var(--faint)}
   .ledger{padding:22px 28px 30px;overflow:auto}
-  .lhead,.lrow{display:grid;grid-template-columns:26px 1fr 2.2fr .9fr .7fr .9fr;gap:14px;align-items:center}
+  .lhead,.lrow{display:grid;grid-template-columns:26px .8fr 1fr 2.2fr .9fr .7fr .9fr;gap:14px;align-items:center}
   .lhead{padding:0 4px 10px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
   .lrow{padding:13px 4px;border-top:1px solid var(--hairline)}
   .lrow .lcat{font-size:13.5px;font-weight:500}
@@ -232,13 +237,40 @@ var SRC_MAP = { "Cash box":"CASH", "UBA account":"UBA", "MoMo":"COY-OM",
 /* -------- state -------- */
 var state = {
   screen:"entry", direction:"out", digits:"", category:null, source:null, description:"",
-  sheet:null, picker:null, user:"Danielle", history:[], focus:null, selected:null
+  sheet:null, picker:null, user:"Danielle", history:[], focus:null, selected:null, date:todayISO(), dateTouched:false
 };
 
 function el(id){ return document.getElementById(id); }
+function isDesktop(){ return window.matchMedia("(min-width:900px)").matches; }
+function localISO(d){ return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
+function todayISO(){ return localISO(new Date()); }
+function opDate(h){ return h.date || localISO(new Date(h.ts)); }
+function dlabel(h){
+  var p=opDate(h).split("-"), d=new Date(+p[0],+p[1]-1,+p[2]);
+  var o={ day:"numeric", month:"short" };
+  if(d.getFullYear()!==new Date().getFullYear()) o.year="numeric";
+  return d.toLocaleDateString("en-GB",o);
+}
+function sortedHistory(){
+  return state.history.slice().sort(function(a,b){
+    var da=opDate(a), db=opDate(b);
+    if(da!==db) return da<db?1:-1;
+    return a.ts<b.ts?1:(a.ts>b.ts?-1:0);
+  });
+}
+function dateRowHTML(){
+  return '<label class="row"><span class="lbl">Date</span>'+
+    '<input type="date" id="opdate" class="dateinput" value="'+esc(state.date)+'" max="'+todayISO()+'" aria-label="Transaction date"></label>';
+}
+var deferredInstall = null;
+function installHTML(){
+  if(!deferredInstall) return "";
+  return '<button class="installbtn" data-act="install">Install app</button>';
+}
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){
   return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
-function fmt(d){ return d ? Number(d).toLocaleString("fr-FR").replace(/ | /g," ") : "0"; }
+var NF = new Intl.NumberFormat("fr-FR");
+function fmt(d){ var n = Number(d); return n ? NF.format(n) : "0"; }
 
 /* -------- persistence -------- */
 function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k);
@@ -250,43 +282,54 @@ function setQueue(q){ try{ localStorage.setItem("cl_queue",JSON.stringify(q)); }
 
 /* -------- backend -------- */
 function send(payload){
+  var body = {};
+  for(var k in payload){ if(k!=="fails" && k!=="tries" && k!=="nextAt") body[k]=payload[k]; }
   return fetch(ENDPOINT,{ method:"POST",
     headers:{ "Content-Type":"text/plain;charset=utf-8" },
-    body:JSON.stringify(payload) }).then(function(r){ return r.json(); });
+    body:JSON.stringify(body) }).then(function(r){
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      return r.text().then(function(t){
+        try{ return JSON.parse(t); }catch(e){ throw new Error("Bad JSON"); }
+      });
+    });
 }
-var flushing = false;   // empêche deux envois simultanés de la même saisie
- 
-function flush(){
-  if(flushing) return;
+var flushing = false;
+function bumpRetry(cid, refused){
   var q = queue();
-  if(!q.length || !navigator.onLine) return;
+  q.forEach(function(x){ if(x.cid===cid){
+    x.fails = (x.fails||0) + 1;
+    if(refused) x.tries = (x.tries||0) + 1;
+    x.nextAt = Date.now() + Math.min(300000, 5000*Math.pow(2, x.fails-1));
+  }});
+  setQueue(q);
+}
+function flush(){
+  if(flushing || !navigator.onLine) return;
+  var now = Date.now();
+  var next = queue().filter(function(x){ return !x.nextAt || x.nextAt<=now; })[0];
+  if(!next) return;
   flushing = true;
-  var next = q[0];
   send(next).then(function(res){
     flushing = false;
-    var rest = queue();
     if(res && res.ok){
-      rest = rest.filter(function(x){ return x.cid !== next.cid; });
+      var rest = queue().filter(function(x){ return x.cid!==next.cid; });
       setQueue(rest);
-      state.history.forEach(function(h){ if(h.cid === next.cid) h.sync = "Sent"; });
+      state.history.forEach(function(h){ if(h.cid===next.cid) h.sync="Sent"; });
       saveHistory();
-      if(!rest.length){ toast(q.length + (q.length>1?" entries":" entry") + " sent to the Google Sheet ✓"); }
-      render();
-      flush();
+      if(!rest.length) toast("Entries sent to the Google Sheet ✓");
+      render(); flush();
     } else {
-      // le serveur a répondu mais a refusé : on réessaie 5 fois au maximum, puis on abandonne
-      rest.forEach(function(x){ if(x.cid === next.cid){ x.tries = (x.tries || 0) + 1; } });
-      var dead = rest.filter(function(x){ return x.cid === next.cid && x.tries >= 5; });
-      if(dead.length){
-        rest = rest.filter(function(x){ return x.cid !== next.cid; });
-        state.history.forEach(function(h){ if(h.cid === next.cid) h.sync = "Refused"; });
+      bumpRetry(next.cid, true);
+      var cur = queue().filter(function(x){ return x.cid===next.cid; })[0];
+      if(cur && cur.tries>=5){
+        setQueue(queue().filter(function(x){ return x.cid!==next.cid; }));
+        state.history.forEach(function(h){ if(h.cid===next.cid) h.sync="Refused"; });
         saveHistory();
         toast((res && res.message) || "Entry refused by the server");
       }
-      setQueue(rest);
-      render();
+      render(); flush();
     }
-  }).catch(function(){ flushing = false; });
+  }).catch(function(){ flushing = false; bumpRetry(next.cid, false); render(); });
 }
 
 /* -------- helpers -------- */
@@ -296,12 +339,12 @@ function toast(text){ clearTimeout(_toast); state.toast=text; render();
 
 function cats(){ return state.direction==="out" ? OUT_CATS : IN_CATS; }
 function currentCat(){ var l=state.category; return cats().filter(function(c){return c.label===l;})[0]; }
-function ready(){ return state.digits && state.category && state.source && state.description.trim(); }
+function ready(){ return Number(state.digits)>0 && state.date && state.category && state.source && state.description.trim(); }
 
 function todayTotals(){
   var out=0, inn=0, today=new Date().toDateString();
   state.history.forEach(function(h){
-    if(new Date(h.ts).toDateString()!==today) return;
+    if(opDate(h)!==todayISO()) return;
     if(h.dir==="out") out+=Number(h.raw||0); else inn+=Number(h.raw||0);
   });
   return { out:out, inn:inn };
@@ -322,14 +365,14 @@ function press(k){ return function(){
 function submit(){
   if(!ready()) return;
   var cat = currentCat();
-  var raw = state.digits;
+  var raw = Number(state.digits);
   var online = navigator.onLine;
   var now = new Date();
   var cid = "cl-" + now.getTime() + "-" + Math.random().toString(36).slice(2,7);
   var hh = ("0"+now.getHours()).slice(-2)+":"+("0"+now.getMinutes()).slice(-2);
 
   var entry = {
-    cid:cid, dir:state.direction, category:state.category,
+    cid:cid, date:state.date, dir:state.direction, category:state.category,
     raw:raw, amount:(state.direction==="out"?"−":"+")+fmt(raw),
     description:state.description.trim(), source:state.source, user:state.user,
     meta:state.user+" · "+hh+" · "+state.source, ts:now.toISOString(),
@@ -341,13 +384,13 @@ function submit(){
     account:cat.account, activity:ACT_MAP[cat.activity]||cat.activity, category:cat.label,
     source:SRC_MAP[state.source]||state.source, description:state.description.trim(),
     counterparty:"", receipt:"",
-    date:now.getFullYear()+"-"+("0"+(now.getMonth()+1)).slice(-2)+"-"+("0"+now.getDate()).slice(-2),
+    date:state.date,
     person:state.user, cid:cid
   };
 
   state.history.unshift(entry); saveHistory();
   // clear amount/category/source/note; keep direction and user
-  state.digits=""; state.category=null; state.source=null; state.description=""; state.sheet=null; state.picker=null;
+  state.date=todayISO(); state.dateTouched=false; state.digits=""; state.category=null; state.source=null; state.description=""; state.sheet=null; state.picker=null;
 
   if(!online){
     var q=queue(); q.push(payload); setQueue(q);
@@ -382,8 +425,8 @@ function bandHTML(){
   var q = queue().length;
   if(navigator.onLine && q===0) return "";
   if(!navigator.onLine)
-    return '<div class="band off"><span class="dot"></span>Offline — entries are kept on this phone</div>';
-  return '<div class="band queued"><span class="dot"></span>'+q+(q>1?" entries":" entry")+' waiting to be sent</div>';
+    return '<div class="band off" role="status"><span class="dot" aria-hidden="true"></span>Offline — entries are kept on this phone</div>';
+  return '<div class="band queued" role="status"><span class="dot" aria-hidden="true"></span>'+q+(q>1?" entries":" entry")+' waiting to be sent</div>';
 }
 function fieldsHTML(){
   var out = state.direction==="out";
@@ -397,9 +440,10 @@ function fieldsHTML(){
     ? '<span class="val">'+esc(state.description)+'</span>'
     : '<span class="val empty">Add a note</span>';
   return ''+
-    '<button class="row" data-act="picker" data-p="category"><span class="lbl">What was it?</span>'+catVal+'<span class="chev">›</span></button>'+
-    '<button class="row" data-act="picker" data-p="source"><span class="lbl">'+(out?"Out of":"Into")+'</span>'+srcVal+'<span class="chev">›</span></button>'+
-    '<button class="row" data-act="note"><span class="lbl">For what</span>'+noteVal+'<span class="chev">›</span></button>';
+    '<button class="row" data-act="picker" data-p="category"><span class="lbl">What was it?</span>'+catVal+'<span class="chev" aria-hidden="true">›</span></button>'+
+    '<button class="row" data-act="picker" data-p="source"><span class="lbl">'+(out?"Out of":"Into")+'</span>'+srcVal+'<span class="chev" aria-hidden="true">›</span></button>'+
+    '<button class="row" data-act="note"><span class="lbl">For what</span>'+noteVal+'<span class="chev" aria-hidden="true">›</span></button>'+
+    dateRowHTML();
 }
 function derivedHTML(cls){
   var c = currentCat(); if(!c) return "";
@@ -420,10 +464,10 @@ function entryHTML(){
     '<div class="scroll">'+
       '<div class="amountwrap">'+
         '<div class="seg">'+
-          '<button class="'+(out?"on":"")+'" data-act="dir" data-p="out">Money out</button>'+
-          '<button class="'+(!out?"on":"")+'" data-act="dir" data-p="in">Money in</button>'+
+          '<button class="'+(out?"on":"")+'" data-act="dir" data-p="out" aria-pressed="'+out+'">Money out</button>'+
+          '<button class="'+(!out?"on":"")+'" data-act="dir" data-p="in" aria-pressed="'+(!out)+'">Money in</button>'+
         '</div>'+
-        '<button class="amount" data-act="keypad">'+
+        '<button class="amount" data-act="keypad" aria-label="Amount: '+esc(fmt(state.digits))+' FCFA. Tap to edit">'+
           '<span class="'+bigCls+' mono">'+esc(fmt(state.digits))+'</span>'+
           '<span class="cur mono">FCFA</span>'+
         '</button>'+
@@ -445,15 +489,15 @@ function historyHTML(){
         '<div class="fig"><div class="k">Out today</div><div class="v mono" style="color:var(--out)">−'+esc(fmt(t.out))+'</div></div>'+
         '<div class="fig"><div class="k">In today</div><div class="v mono" style="color:var(--in)">+'+esc(fmt(t.inn))+'</div></div>'+
       '</div>'+
-      state.history.map(function(h){
+      sortedHistory().map(function(h){
         var oc = h.dir==="out";
-        return '<div class="hrow" data-act="hentry" data-p="'+esc(h.cid)+'">'+
-          '<div class="tile '+(oc?"out":"in")+'">'+(oc?"↑":"↓")+'</div>'+
+        return '<div class="hrow" role="button" tabindex="0" data-act="hentry" data-p="'+esc(h.cid)+'">'+
+          '<div aria-hidden="true" class="tile '+(oc?"out":"in")+'">'+(oc?"↑":"↓")+'</div>'+
           '<div style="flex:1;min-width:0">'+
             '<div class="top"><span class="cat">'+esc(h.category)+'</span>'+
               '<span class="amt '+(oc?"out":"in")+' mono">'+esc(h.amount)+'</span></div>'+
             '<div class="desc">'+esc(h.description)+'</div>'+
-            '<div class="meta"><span>'+esc(h.meta)+'</span>'+
+            '<div class="meta"><span>'+esc(dlabel(h))+' · '+esc(h.meta)+'</span>'+
               '<span class="badge '+(h.sync==="Sent"?"sent":"pending")+'">'+esc(h.sync)+'</span></div>'+
           '</div>'+
         '</div>';
@@ -467,8 +511,8 @@ function mobileHTML(){
   return '<div class="shell">'+
     bandHTML()+
     '<div class="head'+(navigator.onLine&&queue().length===0?" safe":"")+'">'+
-      '<div class="date">'+esc(dateLabel())+'</div>'+
-      '<button class="userchip" data-act="users">'+avatarHTML(state.user,false)+'<span class="name">'+esc(state.user)+'</span></button>'+
+      '<div class="date">'+esc(dateLabel())+'</div>'+installHTML()+
+      '<button class="userchip" data-act="users" aria-label="Who is entering? Current: '+esc(state.user)+'">'+avatarHTML(state.user,false)+'<span class="name">'+esc(state.user)+'</span></button>'+
     '</div>'+
     (entry?entryHTML():historyHTML())+
     '<div class="tabs">'+
@@ -484,10 +528,11 @@ function desktopHTML(){
   var out = state.direction==="out";
   var t = todayTotals();
   var ledger = state.history.length
-    ? state.history.map(function(h){
+    ? sortedHistory().map(function(h){
         var oc=h.dir==="out";
-        return '<div class="lrow" data-act="hentry" data-p="'+esc(h.cid)+'">'+
-          '<div class="tiledot '+(oc?"out":"in")+'">'+(oc?"↑":"↓")+'</div>'+
+        return '<div class="lrow" role="button" tabindex="0" data-act="hentry" data-p="'+esc(h.cid)+'">'+
+          '<div aria-hidden="true" class="tiledot '+(oc?"out":"in")+'">'+(oc?"↑":"↓")+'</div>'+
+          '<div class="lsrc">'+esc(dlabel(h))+'</div>'+
           '<div class="lcat">'+esc(h.category)+'</div>'+
           '<div class="lfor">'+esc(h.description)+'</div>'+
           '<div class="lsrc">'+esc(h.source)+'</div>'+
@@ -504,17 +549,17 @@ function desktopHTML(){
     bandHTML()+
     '<div class="whead">'+
       '<div><div class="date">'+esc(dateLabel())+'</div><div class="title">Cash log</div></div>'+
-      '<div class="right">'+
+      '<div class="right">'+installHTML()+
         '<div class="fig"><div class="k" style="font-size:11px;color:var(--dim)">Out today</div><div class="mono" style="font-size:17px;color:var(--out)">−'+esc(fmt(t.out))+'</div></div>'+
         '<div class="fig"><div class="k" style="font-size:11px;color:var(--dim)">In today</div><div class="mono" style="font-size:17px;color:var(--in)">+'+esc(fmt(t.inn))+'</div></div>'+
-        '<button class="userchip" data-act="users">'+avatarHTML(state.user,false)+'<span class="name">'+esc(state.user)+'</span></button>'+
+        '<button class="userchip" data-act="users" aria-label="Who is entering? Current: '+esc(state.user)+'">'+avatarHTML(state.user,false)+'<span class="name">'+esc(state.user)+'</span></button>'+
       '</div>'+
     '</div>'+
     '<div class="body">'+
       '<div class="left">'+
         '<div class="seg">'+
-          '<button class="'+(out?"on":"")+'" data-act="dir" data-p="out">Money out</button>'+
-          '<button class="'+(!out?"on":"")+'" data-act="dir" data-p="in">Money in</button>'+
+          '<button class="'+(out?"on":"")+'" data-act="dir" data-p="out" aria-pressed="'+out+'">Money out</button>'+
+          '<button class="'+(!out?"on":"")+'" data-act="dir" data-p="in" aria-pressed="'+(!out)+'">Money in</button>'+
         '</div>'+
         '<div class="damount">'+
           '<input id="damt" class="mono '+(state.digits?(out?"out":"in"):"")+'" inputmode="numeric" value="'+esc(fmt(state.digits))+'" placeholder="0">'+
@@ -525,7 +570,7 @@ function desktopHTML(){
         submitHTML()+
       '</div>'+
       '<div class="ledger">'+
-        '<div class="lhead"><div></div><div>Category</div><div>What for</div><div>Source</div><div>Status</div><div style="text-align:right">Amount</div></div>'+
+        '<div class="lhead"><div></div><div>Date</div><div>Category</div><div>What for</div><div>Source</div><div>Status</div><div style="text-align:right">Amount</div></div>'+
         ledger+
       '</div>'+
     '</div>'+
@@ -548,14 +593,14 @@ function pickerOptionsHTML(){
     return '<button class="opt'+(o.sel?" sel":"")+'" '+o.act+'>'+
       '<span class="grow">'+esc(o.label)+'</span>'+
       (o.hint?'<span class="code mono">'+esc(o.hint)+'</span>':"")+
-      '<span class="ck">✓</span></button>';
+      '<span class="ck" aria-hidden="true">✓</span></button>';
   }).join("");
 }
 function usersOptionsHTML(){
   return ["Danielle","Monique"].map(function(n){
     var sel = state.user===n;
     return '<button class="opt'+(sel?" sel":"")+'" data-act="pickuser" data-p="'+n+'">'+
-      avatarHTML(n,true)+'<span class="grow">Mrs '+n+'</span><span class="ck">✓</span></button>';
+      avatarHTML(n,true)+'<span class="grow">Mrs '+n+'</span><span class="ck" aria-hidden="true">✓</span></button>';
   }).join("");
 }
 function pickerTitle(){
@@ -577,7 +622,7 @@ function entrySheetInner(){
   return '<div class="entrysum"><b>'+esc(h.category)+'</b> · '+
       '<span class="mono" style="color:'+(oc?"var(--out)":"var(--in)")+'">'+esc(h.amount)+' F</span><br>'+
       esc(h.description||"")+'<br>'+
-      '<span style="color:var(--faint);font-size:12.5px">'+esc(h.meta)+'</span></div>'+
+      '<span style="color:var(--faint);font-size:12.5px">'+esc(dlabel(h))+' · '+esc(h.meta)+'</span></div>'+
     '<div class="sheetnote">'+note+'</div>'+
     '<button class="delbtn" data-act="del" data-p="'+esc(h.cid)+'">Delete this entry</button>'+
     '<button class="cancelbtn" data-act="close">Cancel</button>';
@@ -591,7 +636,7 @@ function sheetsHTML(){
     inner = '<div class="kamt"><span class="k">Amount</span><span class="v mono">'+esc(fmt(state.digits))+'</span></div>'+
       '<div class="keypad">'+
         ["1","2","3","4","5","6","7","8","9","000","0","←"].map(function(k){
-          return '<button class="'+(k==="←"?"del":"")+'" data-act="key" data-p="'+esc(k)+'">'+esc(k)+'</button>';
+          return '<button class="'+(k==="←"?"del":"")+'" data-act="key" data-p="'+esc(k)+'"'+(k==="←"?' aria-label="Delete last digit"':'')+'>'+esc(k)+'</button>';
         }).join("")+
       '</div>'+
       '<button class="done" data-act="close">Done</button>';
@@ -604,7 +649,7 @@ function sheetsHTML(){
   } else if(s==="users"){
     inner = '<h2>Who is entering?</h2><div class="sub">Remembered on this phone.</div>'+usersOptionsHTML();
   }
-  return '<div class="backdrop" data-act="backdrop"><div class="sheet" data-act="stop">'+inner+'</div></div>';
+  return '<div class="backdrop" data-act="backdrop"><div class="sheet" role="dialog" aria-modal="true" data-act="stop">'+inner+'</div></div>';
 }
 
 /* desktop keypad is not used — amount is typed; note/picker/users become dialogs */
@@ -616,13 +661,13 @@ function dialogHTML(){
   else if(s==="note"){ title = "What was it for?"; inner = noteBoxHTML()+
     '<div class="sub">Written as-is into the Google Sheet.</div><button class="done" data-act="close">Done</button>'; }
   else if(s==="users"){ title = "Who is entering?"; inner = '<div class="sub">Remembered on this phone.</div>'+usersOptionsHTML(); }
-  return '<div class="dialog-back" data-act="backdrop"><div class="dialog" data-act="stop"><h2>'+esc(title)+'</h2>'+inner+'</div></div>';
+  return '<div class="dialog-back" data-act="backdrop"><div class="dialog" role="dialog" aria-modal="true" data-act="stop"><h2>'+esc(title)+'</h2>'+inner+'</div></div>';
 }
 
 /* -------- toast -------- */
 function toastHTML(desktop){
   if(!state.toast) return "";
-  return '<div class="'+(desktop?"dtoast":"toast")+'">'+esc(state.toast)+'</div>';
+  return '<div role="status" class="'+(desktop?"dtoast":"toast")+'">'+esc(state.toast)+'</div>';
 }
 
 function dateLabel(){
@@ -632,7 +677,8 @@ function dateLabel(){
 
 /* -------- render + focus management -------- */
 function render(){
-  el("app").innerHTML = mobileHTML() + desktopHTML() + toastHTML(false) + toastHTML(true);
+  var d = isDesktop();
+  el("app").innerHTML = (d ? desktopHTML() : mobileHTML()) + toastHTML(d);
   // restore focus for text inputs
   if(state.focus==="note"){ var n=el("note"); if(n){ n.focus(); n.setSelectionRange(n.value.length,n.value.length); } }
   if(state.focus==="damt"){ var a=el("damt"); if(a){ a.focus();
@@ -659,6 +705,8 @@ document.addEventListener("click", function(e){
       state.sheet=null; state.picker=null; render(); break;
     case "pickuser": state.user=p; ls("cl_user",p); state.sheet=null; render(); break;
     case "submit": submit(); break;
+    case "install": if(deferredInstall){ deferredInstall.prompt();
+      deferredInstall.userChoice.then(function(){ deferredInstall=null; render(); }); } break;
     case "hentry": state.selected=p; state.sheet="entry"; render(); break;
     case "del":
       state.history = state.history.filter(function(h){ return h.cid!==p; });
@@ -679,6 +727,20 @@ document.addEventListener("input", function(e){
 });
 /* keep the note's typed value when the sheet closes */
 document.addEventListener("focusin", function(e){ if(e.target.id==="note") state.focus="note"; });
+
+document.addEventListener("change", function(e){
+  if(e.target.id==="opdate"){ state.date = e.target.value || todayISO(); state.dateTouched = true; render(); }
+});
+document.addEventListener("keydown", function(e){
+  var t = e.target;
+  if((e.key==="Enter" || e.key===" ") && t.getAttribute && t.getAttribute("role")==="button"){ e.preventDefault(); t.click(); }
+});
+window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); deferredInstall = e; render(); });
+window.addEventListener("appinstalled", function(){ deferredInstall = null; render(); });
+(function(){ var mq = window.matchMedia("(min-width:900px)");
+  if(mq.addEventListener) mq.addEventListener("change", function(){ render(); }); else if(mq.addListener) mq.addListener(function(){ render(); }); })();
+function refreshToday(){ if(!state.dateTouched && state.date!==todayISO()){ state.date = todayISO(); render(); } }
+document.addEventListener("visibilitychange", function(){ if(!document.hidden) refreshToday(); });
 
 /* -------- network -------- */
 window.addEventListener("online", function(){ render(); flush(); });
