@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Cash Log</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#EFECE7">
@@ -22,7 +22,7 @@
 :root{
   --page:#EFECE7; --surface:#FBFAF8; --raised:#FFFDFB; --muted:#F1EDE7; --selected:#F4F1EC;
   --border:#E7E2DB; --border-strong:#E3DED7; --hairline:#EFEAE3;
-  --ink:#1C1917; --secondary:#57534E; --dim:#78716C; --faint:#7A7169; --place:#66605A; --chev:#857C72;
+  --ink:#1C1917; --secondary:#57534E; --dim:#78716C; --faint:#8C837A; --place:#66605A; --chev:#857C72;
   --out:#9A2C2C; --out-tint:#FBEDEC; --in:#166534; --in-tint:#E9F0E5;
   --warn:#B45309; --warn-tint:#FBF0DC; --warn-ink:#8A5A0B; --on-dark:#FBFAF8; --on-dark2:#FFF8EE;
 }
@@ -96,57 +96,10 @@ input{font-family:inherit}
 .figs{display:flex;gap:22px;padding:0 4px 18px}
 .fig .k{font-size:11px;color:var(--dim)} .fig .v{font-size:18px;margin-top:2px}
 .hist{padding:0 18px 26px}
-.hrow{padding:14px 4px;border-top:1px solid var(--hairline);display:flex;gap:12px;align-items:flex-start;cursor:pointer}
-.tile{width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;font-size:14px}
-.tile.out{background:var(--out-tint);color:var(--out)} .tile.in{background:var(--in-tint);color:var(--in)}
-.hrow .top{display:flex;justify-content:space-between;gap:10px}
-.hrow .cat{font-size:14px;font-weight:500}
-.hrow .amt{font-size:14px;white-space:nowrap} .hrow .amt.out{color:var(--out)} .hrow .amt.in{color:var(--in)}
-.hrow .desc{font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:2px;text-wrap:pretty}
-.hrow .meta{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;font-size:11.5px;color:var(--faint)}
 .badge{font-size:11px;padding:2px 8px;border-radius:99px}
 .badge.sent{background:var(--muted);color:var(--dim)} .badge.pending{background:var(--warn-tint);color:var(--warn-ink)}
 
-/* sheets */
-.backdrop{position:fixed;inset:0;background:rgba(28,25,23,.35);display:flex;align-items:flex-end;z-index:20}
-.sheet{width:100%;background:var(--surface);border-radius:20px 20px 0 0;
-  padding:20px 18px calc(24px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;
-  max-height:78vh;overflow:auto}
-.sheet h2{margin:0;font-size:17px;font-weight:600}
-.sheet .sub{font-size:12.5px;color:var(--dim);margin-top:-6px}
-.opt{display:flex;align-items:center;gap:10px;padding:13px 14px;border-radius:12px;font-size:15px;cursor:pointer;
-  min-height:50px;border:1px solid var(--border);background:var(--raised);font-family:inherit;text-align:left;width:100%}
-.opt.sel{border-color:var(--ink);background:var(--selected)}
-.opt .grow{flex:1;min-width:0}
-.opt .code{font-size:11.5px;color:var(--faint)}
-.opt .ck{font-size:14px;color:var(--in);opacity:0} .opt.sel .ck{opacity:1}
-.done{border:0;padding:14px;border-radius:14px;background:var(--ink);color:var(--on-dark);text-align:center;
-  font-size:15px;font-weight:500;min-height:48px;cursor:pointer;font-family:inherit}
-.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.keypad button{padding:15px;border-radius:12px;background:var(--raised);border:1px solid var(--border);
-  text-align:center;font-size:19px;cursor:pointer;min-height:52px;user-select:none;font-family:'IBM Plex Mono',monospace}
-.keypad button.del{background:var(--muted)}
-.kamt{display:flex;align-items:baseline;justify-content:space-between;padding:0 6px}
-.kamt .k{font-size:13px;color:var(--faint)} .kamt .v{font-size:30px;letter-spacing:-.02em}
-.notebox{border:1px solid var(--border);border-radius:12px;background:var(--raised);padding:12px 14px;
-  min-height:88px;display:flex;align-items:flex-start}
-.notebox input{width:100%;border:0;outline:0;background:transparent;font-size:16px;color:var(--ink);padding:0}
-.notebox input::placeholder{color:var(--place);opacity:1}
-.damount input::placeholder{color:var(--place);opacity:1}
-/* delete-entry sheet */
-.entrysum{font-size:14px;color:var(--secondary);line-height:1.55}
-.entrysum b{color:var(--ink)}
-.sheetnote{font-size:12.5px;color:var(--dim);line-height:1.45}
-.delbtn{border:0;width:100%;padding:14px;border-radius:14px;background:var(--out);color:#fff;text-align:center;
-  font-size:15px;font-weight:600;min-height:48px;cursor:pointer;font-family:inherit}
-.cancelbtn{border:1px solid var(--border);width:100%;padding:13px;border-radius:14px;background:transparent;
-  color:var(--secondary);text-align:center;font-size:14.5px;font-weight:500;min-height:44px;cursor:pointer;font-family:inherit}
-
-.dateinput{flex:1;min-width:0;font:inherit;font-size:16px;font-weight:500;color:var(--ink);background:transparent;
-  border:0;outline:0;padding:0;min-height:30px;-webkit-appearance:none;appearance:none;text-align:left}
-.installbtn{border:1px solid var(--border);background:var(--raised);color:var(--ink);border-radius:99px;
-  padding:7px 14px;font-size:12.5px;font-weight:500;min-height:36px;cursor:pointer;font-family:inherit}
-:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+/* pièce de caisse électronique */
 .piece{margin:0 0 14px;background:var(--raised);border:1px solid var(--border);border-radius:14px;position:relative;overflow:hidden;cursor:pointer}
 .piece::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--out)}
 .piece.in::before{background:var(--in)}
@@ -175,16 +128,63 @@ input{font-family:inherit}
 .stamp.sent{color:var(--in);border-color:var(--in)}
 .stamp.pending{color:var(--warn);border-color:var(--warn)}
 .stamp.refused{color:var(--out);border-color:var(--out)}
+
+/* écrans plein cadre : enrôlement, verrou */
+.lockscreen{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  padding:30px;text-align:center;background:var(--surface);max-width:520px;margin:0 auto}
+.lockscreen .logo{width:64px;height:64px;border-radius:18px;background:var(--ink);color:var(--on-dark);
+  display:grid;place-items:center;font-size:24px;font-weight:600;letter-spacing:-.02em}
+.lockscreen h1{margin:0;font-size:19px;font-weight:600}
+.lockscreen p{margin:0;font-size:13px;color:var(--dim);line-height:1.5}
+.lockscreen .done,.lockscreen .cancelbtn{width:100%;max-width:320px}
+
+/* sheets */
+.backdrop{position:fixed;inset:0;background:rgba(28,25,23,.35);display:flex;align-items:flex-end;z-index:20}
+.sheet{width:100%;background:var(--surface);border-radius:20px 20px 0 0;
+  padding:20px 18px calc(24px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;
+  max-height:78vh;overflow:auto}
+.sheet h2{margin:0;font-size:17px;font-weight:600}
+.sheet .sub{font-size:12.5px;color:var(--dim);margin-top:-6px}
+.opt{display:flex;align-items:center;gap:10px;padding:13px 14px;border-radius:12px;font-size:15px;cursor:pointer;
+  min-height:50px;border:1px solid var(--border);background:var(--raised);font-family:inherit;text-align:left;width:100%}
+.opt.sel{border-color:var(--ink);background:var(--selected)}
+.opt .grow{flex:1;min-width:0}
+.opt .code{font-size:11.5px;color:var(--faint)}
+.opt .ck{font-size:14px;color:var(--in);opacity:0} .opt.sel .ck{opacity:1}
+.done{border:0;padding:14px;border-radius:14px;background:var(--ink);color:var(--on-dark);text-align:center;
+  font-size:15px;font-weight:500;min-height:48px;cursor:pointer;font-family:inherit}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.keypad button{padding:15px;border-radius:12px;background:var(--raised);border:1px solid var(--border);
+  text-align:center;font-size:19px;cursor:pointer;min-height:52px;user-select:none;font-family:'IBM Plex Mono',monospace}
+.keypad button.del{background:var(--muted)}
+.kamt{display:flex;align-items:baseline;justify-content:space-between;padding:0 6px}
+.kamt .k{font-size:13px;color:var(--faint)} .kamt .v{font-size:30px;letter-spacing:-.02em}
+.notebox{border:1px solid var(--border);border-radius:12px;background:var(--raised);padding:12px 14px;
+  min-height:88px;display:flex;align-items:flex-start}
+.notebox input{width:100%;border:0;outline:0;background:transparent;font-size:15px;color:var(--ink);padding:0}
+.notebox input::placeholder{color:var(--place);opacity:1}
+.damount input::placeholder{color:var(--place);opacity:1}
+/* delete-entry sheet */
+.entrysum{font-size:14px;color:var(--secondary);line-height:1.55}
+.entrysum b{color:var(--ink)}
+.sheetnote{font-size:12.5px;color:var(--dim);line-height:1.45}
+.delbtn{border:0;width:100%;padding:14px;border-radius:14px;background:var(--out);color:#fff;text-align:center;
+  font-size:15px;font-weight:600;min-height:48px;cursor:pointer;font-family:inherit}
+.cancelbtn{border:1px solid var(--border);width:100%;padding:13px;border-radius:14px;background:transparent;
+  color:var(--secondary);text-align:center;font-size:14.5px;font-weight:500;min-height:44px;cursor:pointer;font-family:inherit}
+
 /* toast */
 .toast{position:fixed;left:16px;right:16px;bottom:calc(24px + env(safe-area-inset-bottom));
   max-width:488px;margin:0 auto;padding:13px 16px;border-radius:12px;background:var(--ink);color:var(--on-dark);
   font-size:13px;line-height:1.4;box-shadow:0 12px 30px rgba(28,25,23,.30);z-index:30}
+.dtoast{display:none}
 
 /* ============================ desktop ============================ */
 .win{display:none}
 @media (min-width:900px){
   body{padding:40px 20px}
   .shell{display:none}
+  .toast{display:none}
   .win{display:block;width:100%;max-width:1160px;margin:0 auto;border-radius:14px;background:var(--surface);
     border:1px solid var(--border-strong);box-shadow:0 26px 70px rgba(28,25,23,.14);overflow:hidden;position:relative}
   .titlebar{display:flex;align-items:center;gap:9px;padding:11px 16px;background:var(--muted);border-bottom:1px solid var(--border-strong)}
@@ -204,9 +204,9 @@ input{font-family:inherit}
   .damount input.out{color:var(--out)} .damount input.in{color:var(--in)}
   .damount .cur{font-size:15px;color:var(--faint)}
   .ledger{padding:22px 28px 30px;overflow:auto}
-  .lhead,.lrow{display:grid;grid-template-columns:26px .8fr 1fr 2.2fr .9fr .7fr .9fr;gap:14px;align-items:center}
+  .lhead,.lrow{display:grid;grid-template-columns:26px 1fr 2.2fr .9fr .7fr .9fr;gap:14px;align-items:center}
   .lhead{padding:0 4px 10px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
-  .lrow{padding:13px 4px;border-top:1px solid var(--hairline)}
+  .lrow{padding:13px 4px;border-top:1px solid var(--hairline);cursor:pointer}
   .lrow .lcat{font-size:13.5px;font-weight:500}
   .lrow .lfor,.lrow .lsrc{font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .lrow .lamt{font-size:14px;white-space:nowrap;text-align:right}
@@ -217,7 +217,7 @@ input{font-family:inherit}
     justify-content:center;padding:24px;z-index:20}
   .dialog{width:420px;max-height:80vh;overflow:auto;background:var(--surface);border-radius:18px;padding:22px;
     display:flex;flex-direction:column;gap:10px;box-shadow:0 30px 80px rgba(28,25,23,.30)}
-  .dtoast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%);padding:13px 20px;border-radius:12px;
+  .dtoast{display:block;position:fixed;left:50%;bottom:34px;transform:translateX(-50%);padding:13px 20px;border-radius:12px;
     background:var(--ink);color:var(--on-dark);font-size:13px;z-index:30;box-shadow:0 12px 30px rgba(28,25,23,.30)}
 }
 </style>
@@ -265,40 +265,16 @@ var SRC_MAP = { "Cash box":"CASH", "UBA account":"UBA", "MoMo":"COY-OM",
 /* -------- state -------- */
 var state = {
   screen:"entry", direction:"out", digits:"", category:null, source:null, description:"",
-  sheet:null, picker:null, user:"Danielle", history:[], focus:null, selected:null, date:todayISO(), dateTouched:false
+  sheet:null, picker:null, history:[], focus:null, selected:null,
+  /* identité : fixée par l'appareil enrôlé, jamais choisie dans l'appli */
+  user:null, device:null, secret:null, locked:false, bioOffer:false,
+  enrollCode:"", enrollErr:"", busy:false, lockErr:""
 };
 
 function el(id){ return document.getElementById(id); }
-function isDesktop(){ return window.matchMedia("(min-width:900px)").matches; }
-function localISO(d){ return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
-function todayISO(){ return localISO(new Date()); }
-function opDate(h){ return h.date || localISO(new Date(h.ts)); }
-function dlabel(h){
-  var p=opDate(h).split("-"), d=new Date(+p[0],+p[1]-1,+p[2]);
-  var o={ day:"numeric", month:"short" };
-  if(d.getFullYear()!==new Date().getFullYear()) o.year="numeric";
-  return d.toLocaleDateString("en-GB",o);
-}
-function sortedHistory(){
-  return state.history.slice().sort(function(a,b){
-    var da=opDate(a), db=opDate(b);
-    if(da!==db) return da<db?1:-1;
-    return a.ts<b.ts?1:(a.ts>b.ts?-1:0);
-  });
-}
-function dateRowHTML(){
-  return '<label class="row"><span class="lbl">Date</span>'+
-    '<input type="date" id="opdate" class="dateinput" value="'+esc(state.date)+'" max="'+todayISO()+'" aria-label="Transaction date"></label>';
-}
-var deferredInstall = null;
-function installHTML(){
-  if(!deferredInstall) return "";
-  return '<button class="installbtn" data-act="install">Install app</button>';
-}
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){
   return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
-var NF = new Intl.NumberFormat("fr-FR");
-function fmt(d){ var n = Number(d); return n ? NF.format(n) : "0"; }
+function fmt(d){ return d ? Number(d).toLocaleString("fr-FR").replace(/\u202f|\u00a0/g," ") : "0"; }
 
 /* -------- persistence -------- */
 function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k);
@@ -308,56 +284,89 @@ function saveHistory(){ try{ localStorage.setItem("cl_history",JSON.stringify(st
 function queue(){ try{ return JSON.parse(localStorage.getItem("cl_queue")||"[]"); }catch(e){ return []; } }
 function setQueue(q){ try{ localStorage.setItem("cl_queue",JSON.stringify(q)); }catch(e){} }
 
+/* -------- signature des saisies (HMAC-SHA256 avec la clé de l'appareil) -------- */
+function hex(buf){ return Array.prototype.map.call(new Uint8Array(buf),function(b){
+  return ("0"+b.toString(16)).slice(-2); }).join(""); }
+function hmac(secret,msg){
+  var enc = new TextEncoder();
+  return crypto.subtle.importKey("raw",enc.encode(secret),{ name:"HMAC", hash:"SHA-256" },false,["sign"])
+    .then(function(k){ return crypto.subtle.sign("HMAC",k,enc.encode(msg)); }).then(hex);
+}
+function signPayload(p){
+  p.device = state.device;
+  p.ts = String(Date.now());
+  var msg = [p.device,p.ts,p.cid,p.type,p.amount,p.account,p.source,p.date,p.description].join("|");
+  return hmac(state.secret,msg).then(function(s){ p.sig = s; return p; });
+}
+
+/* -------- verrou biométrique (empreinte / Face ID de l'appareil) -------- */
+function b64(buf){ var s=""; new Uint8Array(buf).forEach(function(b){ s+=String.fromCharCode(b); }); return btoa(s); }
+function unb64(s){ var r=atob(s), a=new Uint8Array(r.length); for(var i=0;i<r.length;i++){ a[i]=r.charCodeAt(i); } return a; }
+function bioCapable(){
+  return !!(window.PublicKeyCredential && navigator.credentials &&
+            PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable);
+}
+function bioRegister(){
+  return PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(function(ok){
+    if(!ok) throw new Error("none");
+    return navigator.credentials.create({ publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),
+      rp:{ name:"DiDreams" },
+      user:{ id:crypto.getRandomValues(new Uint8Array(16)), name:state.user, displayName:"Mrs "+state.user },
+      pubKeyCredParams:[{ type:"public-key", alg:-7 },{ type:"public-key", alg:-257 }],
+      authenticatorSelection:{ authenticatorAttachment:"platform", userVerification:"required" },
+      timeout:60000 } });
+  }).then(function(c){ ls("cl_bio",b64(c.rawId)); });
+}
+function bioUnlock(){
+  return navigator.credentials.get({ publicKey:{
+    challenge:crypto.getRandomValues(new Uint8Array(32)),
+    allowCredentials:[{ type:"public-key", id:unb64(ls("cl_bio")) }],
+    userVerification:"required", timeout:60000 } });
+}
+
 /* -------- backend -------- */
 function send(payload){
-  var body = {};
-  for(var k in payload){ if(k!=="fails" && k!=="tries" && k!=="nextAt") body[k]=payload[k]; }
   return fetch(ENDPOINT,{ method:"POST",
     headers:{ "Content-Type":"text/plain;charset=utf-8" },
-    body:JSON.stringify(body) }).then(function(r){
-      if(!r.ok) throw new Error("HTTP "+r.status);
-      return r.text().then(function(t){
-        try{ return JSON.parse(t); }catch(e){ throw new Error("Bad JSON"); }
-      });
-    });
+    body:JSON.stringify(payload) }).then(function(r){ return r.json(); });
 }
-var flushing = false;
-function bumpRetry(cid, refused){
-  var q = queue();
-  q.forEach(function(x){ if(x.cid===cid){
-    x.fails = (x.fails||0) + 1;
-    if(refused) x.tries = (x.tries||0) + 1;
-    x.nextAt = Date.now() + Math.min(300000, 5000*Math.pow(2, x.fails-1));
-  }});
-  setQueue(q);
-}
+var flushing = false;   // empêche deux envois simultanés de la même saisie
+
 function flush(){
-  if(flushing || !navigator.onLine) return;
-  var now = Date.now();
-  var next = queue().filter(function(x){ return !x.nextAt || x.nextAt<=now; })[0];
-  if(!next) return;
+  if(flushing) return;
+  var q = queue();
+  if(!q.length || !navigator.onLine) return;
   flushing = true;
+  var next = q[0];
   send(next).then(function(res){
     flushing = false;
+    var rest = queue();
     if(res && res.ok){
-      var rest = queue().filter(function(x){ return x.cid!==next.cid; });
+      rest = rest.filter(function(x){ return x.cid !== next.cid; });
       setQueue(rest);
-      state.history.forEach(function(h){ if(h.cid === next.cid){ h.sync="Sent"; if(res.piece) h.piece=res.piece; } });
+      state.history.forEach(function(h){
+        if(h.cid === next.cid){ h.sync = "Sent"; if(res.piece || res.ref){ h.piece = res.piece || res.ref; } }
+      });
       saveHistory();
-      if(!rest.length) toast("Entries sent to the Google Sheet ✓");
-      render(); flush();
+      if(!rest.length){ toast(q.length + (q.length>1?" pièces enregistrées":" pièce enregistrée") + " ✓"); }
+      render();
+      flush();
     } else {
-      bumpRetry(next.cid, true);
-      var cur = queue().filter(function(x){ return x.cid===next.cid; })[0];
-      if(cur && cur.tries>=5){
-        setQueue(queue().filter(function(x){ return x.cid!==next.cid; }));
-        state.history.forEach(function(h){ if(h.cid===next.cid) h.sync="Refused"; });
+      // le serveur a répondu mais a refusé : 5 essais au maximum (aucun si l'appareil n'est pas reconnu), puis abandon
+      rest.forEach(function(x){ if(x.cid === next.cid){
+        x.tries = (res && res.code === "AUTH") ? 5 : (x.tries || 0) + 1; } });
+      var dead = rest.filter(function(x){ return x.cid === next.cid && x.tries >= 5; });
+      if(dead.length){
+        rest = rest.filter(function(x){ return x.cid !== next.cid; });
+        state.history.forEach(function(h){ if(h.cid === next.cid) h.sync = "Refused"; });
         saveHistory();
-        toast((res && res.message) || "Entry refused by the server");
+        toast((res && res.message) || "Saisie refusée par le serveur");
       }
-      render(); flush();
+      setQueue(rest);
+      render();
     }
-  }).catch(function(){ flushing = false; bumpRetry(next.cid, false); render(); });
+  }).catch(function(){ flushing = false; });
 }
 
 /* -------- helpers -------- */
@@ -367,12 +376,12 @@ function toast(text){ clearTimeout(_toast); state.toast=text; render();
 
 function cats(){ return state.direction==="out" ? OUT_CATS : IN_CATS; }
 function currentCat(){ var l=state.category; return cats().filter(function(c){return c.label===l;})[0]; }
-function ready(){ return Number(state.digits)>0 && state.date && state.category && state.source && state.description.trim(); }
+function ready(){ return state.device && state.user && state.digits && state.category && state.source && state.description.trim(); }
 
 function todayTotals(){
   var out=0, inn=0, today=new Date().toDateString();
   state.history.forEach(function(h){
-    if(opDate(h)!==todayISO()) return;
+    if(new Date(h.ts).toDateString()!==today) return;
     if(h.dir==="out") out+=Number(h.raw||0); else inn+=Number(h.raw||0);
   });
   return { out:out, inn:inn };
@@ -390,21 +399,28 @@ function press(k){ return function(){
   render();
 }; }
 
+function keepQueued(p,msg){
+  var q=queue(); q.push(p); setQueue(q);
+  state.history.forEach(function(h){ if(h.cid===p.cid) h.sync="Pending"; }); saveHistory();
+  toast(msg); render();
+}
+
 function submit(){
   if(!ready()) return;
   var cat = currentCat();
-  var raw = Number(state.digits);
+  var raw = state.digits;
   var online = navigator.onLine;
   var now = new Date();
   var cid = "cl-" + now.getTime() + "-" + Math.random().toString(36).slice(2,7);
   var hh = ("0"+now.getHours()).slice(-2)+":"+("0"+now.getMinutes()).slice(-2);
 
   var entry = {
-    cid:cid, date:state.date, dir:state.direction, category:state.category,account:cat.account, activity:cat.activity, piece:"",
+    cid:cid, dir:state.direction, category:state.category,
     raw:raw, amount:(state.direction==="out"?"−":"+")+fmt(raw),
-    description:state.description.trim(), source:state.source, user:state.user,
+    description:state.description.trim(), source:state.source, user:state.user, dev:state.device,
+    account:cat.account, activity:cat.activity, piece:"",
     meta:state.user+" · "+hh+" · "+state.source, ts:now.toISOString(),
-    sync: online ? "Sent" : "Pending"
+    sync:"Pending"            // passe à « Sent » seulement quand le serveur a numéroté la pièce
   };
 
   var payload = {
@@ -412,39 +428,56 @@ function submit(){
     account:cat.account, activity:ACT_MAP[cat.activity]||cat.activity, category:cat.label,
     source:SRC_MAP[state.source]||state.source, description:state.description.trim(),
     counterparty:"", receipt:"",
-    date:state.date,
+    date:now.getFullYear()+"-"+("0"+(now.getMonth()+1)).slice(-2)+"-"+("0"+now.getDate()).slice(-2),
     person:state.user, cid:cid
   };
 
   state.history.unshift(entry); saveHistory();
   // clear amount/category/source/note; keep direction and user
-  state.date=todayISO(); state.dateTouched=false; state.digits=""; state.category=null; state.source=null; state.description=""; state.sheet=null; state.picker=null;
+  state.digits=""; state.category=null; state.source=null; state.description=""; state.sheet=null; state.picker=null;
+  render();
 
-  if(!online){
-    var q=queue(); q.push(payload); setQueue(q);
-    toast("Kept on this phone — will go out when the network is back");
-    return;
-  }
-  render();
-  send(payload).then(function(res){
-    if(res && res.ok){
-  state.history.forEach(function(h){ if(h.cid===cid && res.piece) h.piece=res.piece; });
-  saveHistory();
-  toast("Pièce "+(res.piece||"")+" enregistrée ✓");
-  render();
-}
-    else {
-      // server refused — keep it locally as pending so nothing is lost
-      var q=queue(); q.push(payload); setQueue(q);
-      state.history.forEach(function(h){ if(h.cid===cid) h.sync="Pending"; }); saveHistory();
-      toast((res && res.message) || "Refused by the server — kept on this phone");
-      render();
+  signPayload(payload).then(function(p){
+    if(!online){
+      keepQueued(p,"Pièce gardée sur ce téléphone — elle partira dès le retour du réseau");
+      return;
     }
+    return send(p).then(function(res){
+      if(res && res.ok){
+        state.history.forEach(function(h){
+          if(h.cid===cid){ h.sync="Sent"; if(res.piece || res.ref){ h.piece=res.piece || res.ref; } }
+        });
+        saveHistory();
+        toast("Pièce "+(entry.dir==="out"?"PC-":"RC-")+(res.piece || res.ref || "")+" enregistrée ✓");
+      } else {
+        keepQueued(p,(res && res.message) || "Refusée par le serveur — gardée sur ce téléphone");
+      }
+    }).catch(function(){
+      keepQueued(p,"Pas de connexion — pièce gardée sur ce téléphone");
+    });
   }).catch(function(){
-    var q=queue(); q.push(payload); setQueue(q);
-    state.history.forEach(function(h){ if(h.cid===cid) h.sync="Pending"; }); saveHistory();
-    toast("No connection — kept on this phone");
+    toast("Signature impossible sur cet appareil");
+  });
+}
+
+function doEnroll(){
+  var code = (state.enrollCode||"").replace(/\D/g,"");
+  if(code.length<6){ state.enrollErr="Entrez le code à 6 chiffres"; render(); return; }
+  if(!navigator.onLine){ state.enrollErr="Connexion requise pour activer l’appareil"; render(); return; }
+  state.busy=true; state.enrollErr=""; render();
+  send({ token:TOKEN, action:"enroll", code:code }).then(function(res){
+    state.busy=false;
+    if(res && res.ok){
+      state.device=res.device; state.secret=res.secret; state.user=res.person;
+      ls("cl_device",res.device); ls("cl_secret",res.secret); ls("cl_user",res.person);
+      state.enrollCode="";
+      state.bioOffer = bioCapable() && !ls("cl_bio");
+    } else {
+      state.enrollErr=(res && res.message) || "Code refusé";
+    }
     render();
+  }).catch(function(){
+    state.busy=false; state.enrollErr="Impossible de joindre le serveur"; render();
   });
 }
 
@@ -458,8 +491,8 @@ function bandHTML(){
   var q = queue().length;
   if(navigator.onLine && q===0) return "";
   if(!navigator.onLine)
-    return '<div class="band off" role="status"><span class="dot" aria-hidden="true"></span>Offline — entries are kept on this phone</div>';
-  return '<div class="band queued" role="status"><span class="dot" aria-hidden="true"></span>'+q+(q>1?" entries":" entry")+' waiting to be sent</div>';
+    return '<div class="band off"><span class="dot"></span>Offline — entries are kept on this phone</div>';
+  return '<div class="band queued"><span class="dot"></span>'+q+(q>1?" entries":" entry")+' waiting to be sent</div>';
 }
 function fieldsHTML(){
   var out = state.direction==="out";
@@ -473,10 +506,9 @@ function fieldsHTML(){
     ? '<span class="val">'+esc(state.description)+'</span>'
     : '<span class="val empty">Add a note</span>';
   return ''+
-    '<button class="row" data-act="picker" data-p="category"><span class="lbl">What was it?</span>'+catVal+'<span class="chev" aria-hidden="true">›</span></button>'+
-    '<button class="row" data-act="picker" data-p="source"><span class="lbl">'+(out?"Out of":"Into")+'</span>'+srcVal+'<span class="chev" aria-hidden="true">›</span></button>'+
-    '<button class="row" data-act="note"><span class="lbl">For what</span>'+noteVal+'<span class="chev" aria-hidden="true">›</span></button>'+
-    dateRowHTML();
+    '<button class="row" data-act="picker" data-p="category"><span class="lbl">What was it?</span>'+catVal+'<span class="chev">›</span></button>'+
+    '<button class="row" data-act="picker" data-p="source"><span class="lbl">'+(out?"Out of":"Into")+'</span>'+srcVal+'<span class="chev">›</span></button>'+
+    '<button class="row" data-act="note"><span class="lbl">For what</span>'+noteVal+'<span class="chev">›</span></button>';
 }
 function derivedHTML(cls){
   var c = currentCat(); if(!c) return "";
@@ -488,6 +520,8 @@ function submitHTML(){
   var label = r ? (online?"Save to the Sheet":"Save on this phone") : "Complete the entry";
   return '<button class="'+cls+'" data-act="submit">'+label+'</button>';
 }
+
+/* -------- montant en lettres + pièce de caisse -------- */
 function lettres(n){
   n = Math.floor(Number(n)||0);
   if(n===0) return "zéro";
@@ -501,7 +535,7 @@ function lettres(n){
     var r2=x-80;
     return r2===0 ? (fin?"quatre-vingts":"quatre-vingt") : "quatre-vingt-"+U[r2];
   }
-function b1000(x,fin){
+  function b1000(x,fin){
     var c=Math.floor(x/100), r=x%100, s="";
     if(c){ s=(c===1?"cent":U[c]+" cent"); if(!r && c>1 && fin) s+="s"; }
     if(r){ s+=(s?" ":"")+b100(r,fin); }
@@ -513,14 +547,19 @@ function b1000(x,fin){
   if(r)   p.push(b1000(r,true));
   return p.join(" ");
 }
-function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+/* N° de pièce = référence du JOURNAL (ex. 2026-11-003), préfixée PC (sortie) ou RC (entrée).
+   Tant que le serveur ne l'a pas attribuée : numéro provisoire. */
+function pieceNo(h){
+  return h.piece ? (h.dir==="out"?"PC-":"RC-")+h.piece : "PROV-"+String(h.cid).slice(-5).toUpperCase();
+}
 
 function pieceHTML(h){
   var oc = h.dir==="out";
   var d = new Date(h.ts);
-  var dateTxt = d.toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"});
+  var dateTxt = d.toLocaleDateString("fr-FR",{ day:"numeric", month:"short", year:"numeric" });
   var hh = ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
-  var no = h.piece ? h.piece : "PROV-"+String(h.cid).slice(-5).toUpperCase();
+  var no = pieceNo(h);
   var st = h.sync==="Sent" ? ["sent","ENREGISTRÉE"] : h.sync==="Refused" ? ["refused","REFUSÉE"] : ["pending","EN ATTENTE"];
   var imput = (h.account ? "Compte "+h.account+" · " : "")+(h.activity||"");
   return '<div class="piece '+(oc?"out":"in")+'" data-act="hentry" data-p="'+esc(h.cid)+'">'+
@@ -543,6 +582,39 @@ function pieceHTML(h){
       '<span class="stamp '+st[0]+'">'+st[1]+'</span></div>'+
   '</div>';
 }
+
+/* -------- écrans plein cadre : enrôlement, verrou -------- */
+function enrollHTML(){
+  return '<div class="lockscreen">'+
+    '<div class="logo">DD</div>'+
+    '<h1>Activer cet appareil</h1>'+
+    '<p>Demandez un code d’invitation à la personne qui gère le classeur, puis saisissez-le ici. Il est valable 15 minutes et ne sert qu’une fois.</p>'+
+    '<div class="notebox" style="min-height:56px;align-items:center;width:100%;max-width:320px">'+
+      '<input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="'+esc(state.enrollCode)+'" '+
+      'placeholder="Code à 6 chiffres" style="text-align:center;font-size:20px;letter-spacing:.3em"></div>'+
+    (state.enrollErr?'<p style="color:var(--out)">'+esc(state.enrollErr)+'</p>':'')+
+    '<button class="done" data-act="enroll">'+(state.busy?"Vérification…":"Activer")+'</button>'+
+  '</div>'+toastHTML(false);
+}
+function bioOfferHTML(){
+  return '<div class="lockscreen">'+
+    '<div class="logo">DD</div>'+
+    '<h1>Verrouiller avec l’empreinte ou Face ID</h1>'+
+    '<p>Mrs '+esc(state.user)+', cet appareil est activé. Le verrou protège vos saisies si quelqu’un prend votre téléphone.</p>'+
+    '<button class="done" data-act="bioenable">Activer le verrou</button>'+
+    '<button class="cancelbtn" data-act="biolater">Plus tard</button>'+
+  '</div>'+toastHTML(false);
+}
+function lockHTML(){
+  return '<div class="lockscreen">'+
+    '<div class="logo">DD</div>'+
+    '<h1>Application verrouillée</h1>'+
+    '<p>Mrs '+esc(state.user)+' · appareil '+esc(state.device)+'</p>'+
+    (state.lockErr?'<p style="color:var(--out)">'+esc(state.lockErr)+'</p>':'')+
+    '<button class="done" data-act="unlock">Déverrouiller</button>'+
+  '</div>'+toastHTML(false);
+}
+
 /* -------- mobile screens -------- */
 function entryHTML(){
   var out = state.direction==="out";
@@ -551,10 +623,10 @@ function entryHTML(){
     '<div class="scroll">'+
       '<div class="amountwrap">'+
         '<div class="seg">'+
-          '<button class="'+(out?"on":"")+'" data-act="dir" data-p="out" aria-pressed="'+out+'">Money out</button>'+
-          '<button class="'+(!out?"on":"")+'" data-act="dir" data-p="in" aria-pressed="'+(!out)+'">Money in</button>'+
+          '<button class="'+(out?"on":"")+'" data-act="dir" data-p="out">Money out</button>'+
+          '<button class="'+(!out?"on":"")+'" data-act="dir" data-p="in">Money in</button>'+
         '</div>'+
-        '<button class="amount" data-act="keypad" aria-label="Amount: '+esc(fmt(state.digits))+' FCFA. Tap to edit">'+
+        '<button class="amount" data-act="keypad">'+
           '<span class="'+bigCls+' mono">'+esc(fmt(state.digits))+'</span>'+
           '<span class="cur mono">FCFA</span>'+
         '</button>'+
@@ -586,8 +658,8 @@ function mobileHTML(){
   return '<div class="shell">'+
     bandHTML()+
     '<div class="head'+(navigator.onLine&&queue().length===0?" safe":"")+'">'+
-      '<div class="date">'+esc(dateLabel())+'</div>'+installHTML()+
-      '<button class="userchip" data-act="users" aria-label="Who is entering? Current: '+esc(state.user)+'">'+avatarHTML(state.user,false)+'<span class="name">'+esc(state.user)+'</span></button>'+
+      '<div class="date">'+esc(dateLabel())+'</div>'+
+      '<button class="userchip" data-act="users">'+avatarHTML(state.user,false)+'<span class="name">'+esc(state.user)+'</span></button>'+
     '</div>'+
     (entry?entryHTML():historyHTML())+
     '<div class="tabs">'+
@@ -603,12 +675,12 @@ function desktopHTML(){
   var out = state.direction==="out";
   var t = todayTotals();
   var ledger = state.history.length
-    ? sortedHistory().map(function(h){
+    ? state.history.map(function(h){
         var oc=h.dir==="out";
-        return '<div class="lrow" role="button" tabindex="0" data-act="hentry" data-p="'+esc(h.cid)+'">'+
-          '<div aria-hidden="true" class="tiledot '+(oc?"out":"in")+'">'+(oc?"↑":"↓")+'</div>'+
-          '<div class="lsrc">'+esc(dlabel(h))+'</div>'+
-          '<div class="lcat">'+esc(h.category)+'<div class="mono" style="font-size:11px;color:var(--faint)">'+esc(h.piece||"PROV-"+String(h.cid).slice(-5).toUpperCase())+'</div></div>'+
+        var no = pieceNo(h);
+        return '<div class="lrow" data-act="hentry" data-p="'+esc(h.cid)+'">'+
+          '<div class="tiledot '+(oc?"out":"in")+'">'+(oc?"↑":"↓")+'</div>'+
+          '<div class="lcat">'+esc(h.category)+'<div class="mono" style="font-size:11px;color:var(--faint)">'+esc(no)+'</div></div>'+
           '<div class="lfor">'+esc(h.description)+'</div>'+
           '<div class="lsrc">'+esc(h.source)+'</div>'+
           '<div><span class="badge '+(h.sync==="Sent"?"sent":"pending")+'">'+esc(h.sync)+'</span></div>'+
@@ -624,17 +696,17 @@ function desktopHTML(){
     bandHTML()+
     '<div class="whead">'+
       '<div><div class="date">'+esc(dateLabel())+'</div><div class="title">Cash log</div></div>'+
-      '<div class="right">'+installHTML()+
+      '<div class="right">'+
         '<div class="fig"><div class="k" style="font-size:11px;color:var(--dim)">Out today</div><div class="mono" style="font-size:17px;color:var(--out)">−'+esc(fmt(t.out))+'</div></div>'+
         '<div class="fig"><div class="k" style="font-size:11px;color:var(--dim)">In today</div><div class="mono" style="font-size:17px;color:var(--in)">+'+esc(fmt(t.inn))+'</div></div>'+
-        '<button class="userchip" data-act="users" aria-label="Who is entering? Current: '+esc(state.user)+'">'+avatarHTML(state.user,false)+'<span class="name">'+esc(state.user)+'</span></button>'+
+        '<button class="userchip" data-act="users">'+avatarHTML(state.user,false)+'<span class="name">'+esc(state.user)+'</span></button>'+
       '</div>'+
     '</div>'+
     '<div class="body">'+
       '<div class="left">'+
         '<div class="seg">'+
-          '<button class="'+(out?"on":"")+'" data-act="dir" data-p="out" aria-pressed="'+out+'">Money out</button>'+
-          '<button class="'+(!out?"on":"")+'" data-act="dir" data-p="in" aria-pressed="'+(!out)+'">Money in</button>'+
+          '<button class="'+(out?"on":"")+'" data-act="dir" data-p="out">Money out</button>'+
+          '<button class="'+(!out?"on":"")+'" data-act="dir" data-p="in">Money in</button>'+
         '</div>'+
         '<div class="damount">'+
           '<input id="damt" class="mono '+(state.digits?(out?"out":"in"):"")+'" inputmode="numeric" value="'+esc(fmt(state.digits))+'" placeholder="0">'+
@@ -645,7 +717,7 @@ function desktopHTML(){
         submitHTML()+
       '</div>'+
       '<div class="ledger">'+
-        '<div class="lhead"><div></div><div>Date</div><div>Category</div><div>What for</div><div>Source</div><div>Status</div><div style="text-align:right">Amount</div></div>'+
+        '<div class="lhead"><div></div><div>Category</div><div>What for</div><div>Source</div><div>Status</div><div style="text-align:right">Amount</div></div>'+
         ledger+
       '</div>'+
     '</div>'+
@@ -668,15 +740,17 @@ function pickerOptionsHTML(){
     return '<button class="opt'+(o.sel?" sel":"")+'" '+o.act+'>'+
       '<span class="grow">'+esc(o.label)+'</span>'+
       (o.hint?'<span class="code mono">'+esc(o.hint)+'</span>':"")+
-      '<span class="ck" aria-hidden="true">✓</span></button>';
+      '<span class="ck">✓</span></button>';
   }).join("");
 }
-function usersOptionsHTML(){
-  return ["Danielle","Monique"].map(function(n){
-    var sel = state.user===n;
-    return '<button class="opt'+(sel?" sel":"")+'" data-act="pickuser" data-p="'+n+'">'+
-      avatarHTML(n,true)+'<span class="grow">Mrs '+n+'</span><span class="ck" aria-hidden="true">✓</span></button>';
-  }).join("");
+function deviceInner(){
+  var bio = !!ls("cl_bio");
+  return '<div class="entrysum"><b>Mrs '+esc(state.user)+'</b><br>Appareil <span class="mono">'+esc(state.device)+'</span></div>'+
+    '<div class="sheetnote">Les pièces établies depuis ce téléphone sont signées au nom de cet appareil. Il ne peut pas saisir pour quelqu’un d’autre.</div>'+
+    (bioCapable() ? (bio
+      ? '<button class="done" data-act="lock">Verrouiller maintenant</button>'
+      : '<button class="done" data-act="bioenable">Activer empreinte / Face ID</button>') : '')+
+    '<button class="cancelbtn" data-act="close">Fermer</button>';
 }
 function pickerTitle(){
   if(state.picker==="category") return "What was it?";
@@ -691,22 +765,23 @@ function entrySheetInner(){
   if(!h) return '<div class="sheetnote">Pièce introuvable.</div>';
   var pending = queue().some(function(x){ return x.cid===h.cid; });
   var note = pending
-    ? "Pas encore envoyée : la supprimer l'annule, rien n'arrive dans le classeur."
-    : "Déjà enregistrée dans le classeur. La supprimer ici ne l'efface pas du classeur : une pièce numérotée ne se supprime pas, elle s'annule par une écriture contraire.";
+    ? "Pas encore envoyée : la retirer l’annule, rien n’arrive dans le classeur."
+    : "Déjà enregistrée dans le classeur. La retirer ici ne l’efface pas du classeur : une pièce numérotée ne se supprime pas, elle s’annule par une écriture contraire.";
   return pieceHTML(h).replace('data-act="hentry"','data-act="stop"')+
     '<div class="sheetnote">'+note+'</div>'+
     '<button class="delbtn" data-act="del" data-p="'+esc(h.cid)+'">Retirer de ce téléphone</button>'+
     '<button class="cancelbtn" data-act="close">Fermer</button>';
 }
+
 function sheetsHTML(){
   var s = state.sheet; if(!s) return "";
   var inner;
-  if(s==="entry"){ inner = '<h2>Entry</h2>'+entrySheetInner(); }
+  if(s==="entry"){ inner = '<h2>Pièce</h2>'+entrySheetInner(); }
   else if(s==="keypad"){
     inner = '<div class="kamt"><span class="k">Amount</span><span class="v mono">'+esc(fmt(state.digits))+'</span></div>'+
       '<div class="keypad">'+
         ["1","2","3","4","5","6","7","8","9","000","0","←"].map(function(k){
-          return '<button class="'+(k==="←"?"del":"")+'" data-act="key" data-p="'+esc(k)+'"'+(k==="←"?' aria-label="Delete last digit"':'')+'>'+esc(k)+'</button>';
+          return '<button class="'+(k==="←"?"del":"")+'" data-act="key" data-p="'+esc(k)+'">'+esc(k)+'</button>';
         }).join("")+
       '</div>'+
       '<button class="done" data-act="close">Done</button>';
@@ -717,27 +792,27 @@ function sheetsHTML(){
       '<div class="sub">Written as-is into the Google Sheet.</div>'+
       '<button class="done" data-act="close">Done</button>';
   } else if(s==="users"){
-    inner = '<h2>Who is entering?</h2><div class="sub">Remembered on this phone.</div>'+usersOptionsHTML();
+    inner = '<h2>Cet appareil</h2>'+deviceInner();
   }
-  return '<div class="backdrop" data-act="backdrop"><div class="sheet" role="dialog" aria-modal="true" data-act="stop">'+inner+'</div></div>';
+  return '<div class="backdrop" data-act="backdrop"><div class="sheet" data-act="stop">'+inner+'</div></div>';
 }
 
-/* desktop keypad is not used — amount is typed; note/picker/users become dialogs */
+/* desktop keypad is not used — amount is typed; note/picker/device become dialogs */
 function dialogHTML(){
   var s = state.sheet; if(!s || s==="keypad") return "";
   var title, inner;
-  if(s==="entry"){ title = "Entry"; inner = entrySheetInner(); }
+  if(s==="entry"){ title = "Pièce"; inner = entrySheetInner(); }
   else if(s==="picker"){ title = pickerTitle(); inner = pickerOptionsHTML(); }
   else if(s==="note"){ title = "What was it for?"; inner = noteBoxHTML()+
     '<div class="sub">Written as-is into the Google Sheet.</div><button class="done" data-act="close">Done</button>'; }
-  else if(s==="users"){ title = "Who is entering?"; inner = '<div class="sub">Remembered on this phone.</div>'+usersOptionsHTML(); }
-  return '<div class="dialog-back" data-act="backdrop"><div class="dialog" role="dialog" aria-modal="true" data-act="stop"><h2>'+esc(title)+'</h2>'+inner+'</div></div>';
+  else if(s==="users"){ title = "Cet appareil"; inner = deviceInner(); }
+  return '<div class="dialog-back" data-act="backdrop"><div class="dialog" data-act="stop"><h2>'+esc(title)+'</h2>'+inner+'</div></div>';
 }
 
 /* -------- toast -------- */
 function toastHTML(desktop){
   if(!state.toast) return "";
-  return '<div role="status" class="'+(desktop?"dtoast":"toast")+'">'+esc(state.toast)+'</div>';
+  return '<div class="'+(desktop?"dtoast":"toast")+'">'+esc(state.toast)+'</div>';
 }
 
 function dateLabel(){
@@ -747,8 +822,10 @@ function dateLabel(){
 
 /* -------- render + focus management -------- */
 function render(){
-  var d = isDesktop();
-  el("app").innerHTML = (d ? desktopHTML() : mobileHTML()) + toastHTML(d);
+  if(state.locked){ el("app").innerHTML = lockHTML(); return; }
+  if(!state.device){ el("app").innerHTML = enrollHTML(); return; }
+  if(state.bioOffer){ el("app").innerHTML = bioOfferHTML(); return; }
+  el("app").innerHTML = mobileHTML() + desktopHTML() + toastHTML(false) + toastHTML(true);
   // restore focus for text inputs
   if(state.focus==="note"){ var n=el("note"); if(n){ n.focus(); n.setSelectionRange(n.value.length,n.value.length); } }
   if(state.focus==="damt"){ var a=el("damt"); if(a){ a.focus();
@@ -773,23 +850,33 @@ document.addEventListener("click", function(e){
     case "pick":
       if(t.getAttribute("data-kind")==="category") state.category=p; else state.source=p;
       state.sheet=null; state.picker=null; render(); break;
-    case "pickuser": state.user=p; ls("cl_user",p); state.sheet=null; render(); break;
     case "submit": submit(); break;
-    case "install": if(deferredInstall){ deferredInstall.prompt();
-      deferredInstall.userChoice.then(function(){ deferredInstall=null; render(); }); } break;
     case "hentry": state.selected=p; state.sheet="entry"; render(); break;
     case "del":
       state.history = state.history.filter(function(h){ return h.cid!==p; });
       setQueue(queue().filter(function(x){ return x.cid!==p; }));
       saveHistory();
       state.sheet=null; state.selected=null;
-      toast("Entry deleted"); render(); break;
+      toast("Pièce retirée de ce téléphone"); break;
+    case "enroll": doEnroll(); break;
+    case "bioenable":
+      bioRegister().then(function(){
+        state.bioOffer=false; state.sheet=null; toast("Verrou biométrique activé ✓");
+      }).catch(function(){ toast("Activation annulée ou indisponible sur cet appareil"); });
+      break;
+    case "biolater": state.bioOffer=false; render(); break;
+    case "lock": state.sheet=null; state.locked=true; state.lockErr=""; render(); break;
+    case "unlock":
+      bioUnlock().then(function(){ state.locked=false; state.lockErr=""; render(); flush(); })
+        .catch(function(){ state.lockErr="Vérification annulée ou échouée"; render(); });
+      break;
   }
 });
 
 /* text inputs: update state without a disruptive full re-render on every keystroke */
 document.addEventListener("input", function(e){
   if(e.target.id==="note"){ state.description = e.target.value; return; }
+  if(e.target.id==="code"){ state.enrollCode = e.target.value.replace(/\D/g,"").slice(0,6); return; }
   if(e.target.id==="damt"){
     var v = e.target.value.replace(/\D/g,"").replace(/^0+/,"").slice(0,9);
     state.digits = v; state.focus="damt"; render();
@@ -798,31 +885,25 @@ document.addEventListener("input", function(e){
 /* keep the note's typed value when the sheet closes */
 document.addEventListener("focusin", function(e){ if(e.target.id==="note") state.focus="note"; });
 
-document.addEventListener("change", function(e){
-  if(e.target.id==="opdate"){ state.date = e.target.value || todayISO(); state.dateTouched = true; render(); }
-});
-document.addEventListener("keydown", function(e){
-  var t = e.target;
-  if((e.key==="Enter" || e.key===" ") && t.getAttribute && t.getAttribute("role")==="button"){ e.preventDefault(); t.click(); }
-});
-window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); deferredInstall = e; render(); });
-window.addEventListener("appinstalled", function(){ deferredInstall = null; render(); });
-(function(){ var mq = window.matchMedia("(min-width:900px)");
-  if(mq.addEventListener) mq.addEventListener("change", function(){ render(); }); else if(mq.addListener) mq.addListener(function(){ render(); }); })();
-function refreshToday(){ if(!state.dateTouched && state.date!==todayISO()){ state.date = todayISO(); render(); } }
-document.addEventListener("visibilitychange", function(){ if(!document.hidden) refreshToday(); });
-
-/* -------- network -------- */
+/* -------- network + verrou automatique -------- */
 window.addEventListener("online", function(){ render(); flush(); });
 window.addEventListener("offline", function(){ render(); });
-/* keep retrying a queued entry on its own — no reload needed */
-document.addEventListener("visibilitychange", function(){ if(!document.hidden) flush(); });
+var hiddenAt = 0;
+document.addEventListener("visibilitychange", function(){
+  if(document.hidden){ hiddenAt = Date.now(); return; }
+  // retour dans l'appli après plus d'une minute : on reverrouille
+  if(state.device && ls("cl_bio") && hiddenAt && Date.now()-hiddenAt > 60000){ state.locked=true; state.lockErr=""; render(); }
+  hiddenAt = 0;
+  flush();
+});
 window.addEventListener("focus", flush);
 
 /* -------- boot -------- */
 (function(){
   state.history = loadHistory();
-  var u = ls("cl_user"); if(u==="Danielle"||u==="Monique") state.user=u;
+  var d = ls("cl_device"), s = ls("cl_secret"), u = ls("cl_user");
+  if(d && s && u){ state.device=d; state.secret=s; state.user=u; }
+  state.locked = !!(state.device && ls("cl_bio"));
   render();
   flush();
   setInterval(function(){ if(navigator.onLine && queue().length) flush(); }, 15000);
