@@ -465,7 +465,9 @@ function doEnroll(){
   if(code.length<6){ state.enrollErr="Entrez le code à 6 chiffres"; render(); return; }
   if(!navigator.onLine){ state.enrollErr="Connexion requise pour activer l’appareil"; render(); return; }
   state.busy=true; state.enrollErr=""; render();
-  send({ token:TOKEN, action:"enroll", code:code }).then alert("REPONSE DU SERVEUR : " + JSON.stringify(res));(function(res){
+  
+  send({ token:TOKEN, action:"enroll", code:code }).then(function(res){
+    alert("REPONSE DU SERVEUR : " + JSON.stringify(res)); // <--- L'ALERT EST ICI MAINTENANT
     state.busy=false;
     if(res && res.ok){
       state.device=res.device; state.secret=res.secret; state.user=res.person;
@@ -476,11 +478,13 @@ function doEnroll(){
       state.enrollErr=(res && res.message) || "Code refusé";
     }
     render();
-  }).catch(function(){
-    state.busy=false; state.enrollErr="Impossible de joindre le serveur"; render();
+  }).catch(function(err){
+    alert("ERREUR DE CONNEXION : " + err.message); // <--- ALERT ICI AUSSI POUR VOIR LE RESEAU
+    state.busy=false; 
+    state.enrollErr="Impossible de joindre le serveur"; 
+    render();
   });
 }
-
 /* -------- shared fragments -------- */
 function avatarHTML(name,big){
   var sz = big?34:26, fs = big?13:11;
