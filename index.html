@@ -230,7 +230,7 @@ input{font-family:inherit}
 /* ============================================================
    PASTE YOUR WEB APP URL HERE — it must end with /exec
    ============================================================ */
-var ENDPOINT = 'https://script.google.com/macros/s/AKfycbzw6mSTuSDDTcb42XwdXwrgedpUJQ0o_XQMocRg0q6E5cOZevA/exec';
+var ENDPOINT = 'https://script.google.com/macros/s/AKfycbx1uoE_eIFjZV20ykaxE5lQ6tHi4BhVc3LWIyAyqbkTMcsVIlt8BgD4_aP6Lh8vzdVN/exec';
 var TOKEN    = 'dd-7Kq2mXv9Rt4LpZ8w';   // must match PWA_TOKEN in Form.gs
 /* ========================================================== */
 
@@ -473,8 +473,8 @@ function doEnroll(){
       state.enrollCode="";
       state.bioOffer = bioCapable() && !ls("cl_bio");
     } else {
-      state.enrollErr = (res && !res.v)
-        ? "Le serveur répond avec une ancienne version du code. Republiez le déploiement Apps Script puis mettez son adresse dans l’appli."
+      state.enrollErr = (res && !res.v && res.message === "Enter an amount.")
+        ? "Le serveur répond avec une ancienne version du code. Republiez le déploiement Apps Script (Nouvelle version)."
         : ((res && res.message) || "Code refusé");
     }
     render();
