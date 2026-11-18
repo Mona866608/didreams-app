@@ -230,7 +230,7 @@ input{font-family:inherit}
 /* ============================================================
    PASTE YOUR WEB APP URL HERE — it must end with /exec
    ============================================================ */
-var ENDPOINT = 'https://script.google.com/macros/s/AKfycbzD98s84YJhCYt6cZPoj7eLhSz_tHUhN3Xi9aSh8zizRR4r7hgImHX0gKDWDhIsT3-S/exec';
+var ENDPOINT = 'https://script.google.com/macros/s/AKfycbx1uoE_eIFjZV20ykaxE5lQ6tHi4BhVc3LWIyAyqbkTMcsVIlt8BgD4_aP6Lh8vzdVN/exec';
 var TOKEN    = 'dd-7Kq2mXv9Rt4LpZ8w';   // must match PWA_TOKEN in Form.gs
 /* ========================================================== */
 
@@ -465,9 +465,7 @@ function doEnroll(){
   if(code.length<6){ state.enrollErr="Entrez le code à 6 chiffres"; render(); return; }
   if(!navigator.onLine){ state.enrollErr="Connexion requise pour activer l’appareil"; render(); return; }
   state.busy=true; state.enrollErr=""; render();
-  
   send({ token:TOKEN, action:"enroll", code:code }).then(function(res){
-    alert("REPONSE DU SERVEUR : " + JSON.stringify(res)); // <--- L'ALERT EST ICI MAINTENANT
     state.busy=false;
     if(res && res.ok){
       state.device=res.device; state.secret=res.secret; state.user=res.person;
@@ -478,13 +476,11 @@ function doEnroll(){
       state.enrollErr=(res && res.message) || "Code refusé";
     }
     render();
-  }).catch(function(err){
-    alert("ERREUR DE CONNEXION : " + err.message); // <--- ALERT ICI AUSSI POUR VOIR LE RESEAU
-    state.busy=false; 
-    state.enrollErr="Impossible de joindre le serveur"; 
-    render();
+  }).catch(function(){
+    state.busy=false; state.enrollErr="Impossible de joindre le serveur"; render();
   });
 }
+
 /* -------- shared fragments -------- */
 function avatarHTML(name,big){
   var sz = big?34:26, fs = big?13:11;
