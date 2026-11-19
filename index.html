@@ -329,7 +329,18 @@ function bioUnlock(){
 function send(payload){
   return fetch(ENDPOINT,{ method:"POST",
     headers:{ "Content-Type":"text/plain;charset=utf-8" },
-    body:JSON.stringify(payload) }).then(function(r){ return r.json(); });
+    body:JSON.stringify(payload) }).then(function(r){
+      var st = r.status;
+      return r.text().then(function(t){
+        try{ return JSON.parse(t); }
+        catch(e){
+          var er = new Error("NONJSON");
+          er.status = st;
+          er.body = String(t).replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim().slice(0,140);
+          throw er;
+        }
+      });
+    });
 }
 var flushing = false;   // empêche deux envois simultanés de la même saisie
 
@@ -452,8 +463,10 @@ function submit(){
       } else {
         keepQueued(p,(res && res.message) || "Refusée par le serveur — gardée sur ce téléphone");
       }
-    }).catch(function(){
-      keepQueued(p,"Pas de connexion — pièce gardée sur ce téléphone");
+    }).catch(function(err){
+      keepQueued(p,(err && err.message==="NONJSON")
+        ? "Le serveur a répondu une page web : pièce gardée sur ce téléphone."
+        : "Pas de connexion — pièce gardée sur ce téléphone");
     });
   }).catch(function(){
     toast("Signature impossible sur cet appareil");
@@ -478,8 +491,12 @@ function doEnroll(){
         : ((res && res.message) || "Code refusé");
     }
     render();
-  }).catch(function(){
-    state.busy=false; state.enrollErr="Impossible de joindre le serveur"; render();
+  }).catch(function(err){
+    state.busy=false;
+    state.enrollErr = (err && err.message==="NONJSON")
+      ? "Le serveur a répondu une page web (HTTP "+err.status+") : « "+(err.body||"page vide")+" »"
+      : "Pas de réponse du serveur : "+((err && err.message)||"réseau")+" (la requête n’a pas abouti)";
+    render();
   });
 }
 
@@ -596,7 +613,7 @@ function enrollHTML(){
       'placeholder="Code à 6 chiffres" style="text-align:center;font-size:20px;letter-spacing:.3em"></div>'+
     (state.enrollErr?'<p style="color:var(--out)">'+esc(state.enrollErr)+'</p>':'')+
     '<button class="done" data-act="enroll">'+(state.busy?"Vérification…":"Activer")+'</button>'+
-    '<p style="font-size:11px;color:var(--faint)">appli v15 · serveur …'+esc(ENDPOINT.slice(-10,-5))+'</p>'+
+    '<p style="font-size:11px;color:var(--faint)">appli v17 · serveur …'+esc(ENDPOINT.slice(-10,-5))+'</p>'+
   '</div>'+toastHTML(false);
 }
 function bioOfferHTML(){
