@@ -36,9 +36,9 @@ body{background:var(--page);color:var(--ink);
 input{font-family:inherit}
 
 /* mobile shell — no fake status bar or device chrome; the real OS draws it */
-.shell{min-height:100dvh;display:flex;flex-direction:column;max-width:520px;margin:0 auto;
+.shell{height:100dvh;min-height:0;display:flex;flex-direction:column;max-width:520px;margin:0 auto;
   background:var(--surface);position:relative;overflow:hidden}
-.scroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+.scroll{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
 
 /* band */
 .band{display:flex;align-items:center;gap:9px;padding:calc(9px + env(safe-area-inset-top)) 22px 9px;
@@ -93,6 +93,9 @@ input{font-family:inherit}
 .tabs button.on{color:var(--ink);font-weight:600;background:var(--muted)}
 
 /* history */
+.histbar{display:flex;justify-content:space-between;align-items:center;padding:4px 18px 8px}
+.backlink{border:0;background:0;font-family:inherit;font-size:14px;font-weight:500;color:var(--secondary);
+  padding:8px 4px;min-height:44px;cursor:pointer}
 .figs{display:flex;gap:22px;padding:0 4px 18px}
 .fig .k{font-size:11px;color:var(--dim)} .fig .v{font-size:18px;margin-top:2px}
 .hist{padding:0 18px 26px}
@@ -360,7 +363,7 @@ function flush(){
         if(h.cid === next.cid){ h.sync = "Sent"; if(res.piece || res.ref){ h.piece = res.piece || res.ref; } }
       });
       saveHistory();
-      if(!rest.length){ toast(q.length + (q.length>1?" pièces enregistrées":" pièce enregistrée") + " ✓"); }
+      if(!rest.length){ toast(q.length + (q.length>1?" vouchers recorded":" voucher recorded") + " ✓"); }
       render();
       flush();
     } else {
@@ -372,7 +375,7 @@ function flush(){
         rest = rest.filter(function(x){ return x.cid !== next.cid; });
         state.history.forEach(function(h){ if(h.cid === next.cid) h.sync = "Refused"; });
         saveHistory();
-        toast((res && res.message) || "Saisie refusée par le serveur");
+        toast((res && res.message) || "Entry refused by the server");
       }
       setQueue(rest);
       render();
@@ -450,7 +453,7 @@ function submit(){
 
   signPayload(payload).then(function(p){
     if(!online){
-      keepQueued(p,"Pièce gardée sur ce téléphone — elle partira dès le retour du réseau");
+      keepQueued(p,"Voucher kept on this phone — it will go out when the network is back");
       return;
     }
     return send(p).then(function(res){
@@ -459,24 +462,24 @@ function submit(){
           if(h.cid===cid){ h.sync="Sent"; if(res.piece || res.ref){ h.piece=res.piece || res.ref; } }
         });
         saveHistory();
-        toast("Pièce "+(entry.dir==="out"?"PC-":"RC-")+(res.piece || res.ref || "")+" enregistrée ✓");
+        toast("Voucher "+(entry.dir==="out"?"CPV-":"CRV-")+(res.piece || res.ref || "")+" recorded ✓");
       } else {
-        keepQueued(p,(res && res.message) || "Refusée par le serveur — gardée sur ce téléphone");
+        keepQueued(p,(res && res.message) || "Refused by the server — kept on this phone");
       }
     }).catch(function(err){
       keepQueued(p,(err && err.message==="NONJSON")
-        ? "Le serveur a répondu une page web : pièce gardée sur ce téléphone."
-        : "Pas de connexion — pièce gardée sur ce téléphone");
+        ? "The server replied with a web page: voucher kept on this phone."
+        : "No connection — voucher kept on this phone");
     });
   }).catch(function(){
-    toast("Signature impossible sur cet appareil");
+    toast("Signing is not possible on this device");
   });
 }
 
 function doEnroll(){
   var code = (state.enrollCode||"").replace(/\D/g,"");
-  if(code.length<6){ state.enrollErr="Entrez le code à 6 chiffres"; render(); return; }
-  if(!navigator.onLine){ state.enrollErr="Connexion requise pour activer l’appareil"; render(); return; }
+  if(code.length<6){ state.enrollErr="Enter the 6-digit code"; render(); return; }
+  if(!navigator.onLine){ state.enrollErr="A connection is required to activate the device"; render(); return; }
   state.busy=true; state.enrollErr=""; render();
   send({ token:TOKEN, action:"enroll", code:code }).then(function(res){
     state.busy=false;
@@ -487,15 +490,15 @@ function doEnroll(){
       state.bioOffer = bioCapable() && !ls("cl_bio");
     } else {
       state.enrollErr = (res && !res.v && res.message === "Enter an amount.")
-        ? "Le serveur répond avec une ancienne version du code. Republiez le déploiement Apps Script (Nouvelle version)."
-        : ((res && res.message) || "Code refusé");
+        ? "The server is running an old version of the code. Republish the Apps Script deployment (New version)."
+        : ((res && res.message) || "Code refused");
     }
     render();
   }).catch(function(err){
     state.busy=false;
     state.enrollErr = (err && err.message==="NONJSON")
-      ? "Le serveur a répondu une page web (HTTP "+err.status+") : « "+(err.body||"page vide")+" »"
-      : "Pas de réponse du serveur : "+((err && err.message)||"réseau")+" (la requête n’a pas abouti)";
+      ? "The server replied with a web page (HTTP "+err.status+"): “"+(err.body||"empty page")+"”"
+      : "No response from the server: "+((err && err.message)||"network")+" (the request did not go through)";
     render();
   });
 }
@@ -541,97 +544,272 @@ function submitHTML(){
 }
 
 /* -------- montant en lettres + pièce de caisse -------- */
-function lettres(n){
+function wordsEn(n){
   n = Math.floor(Number(n)||0);
-  if(n===0) return "zéro";
-  var U=["","un","deux","trois","quatre","cinq","six","sept","huit","neuf","dix","onze","douze","treize",
-         "quatorze","quinze","seize","dix-sept","dix-huit","dix-neuf"];
-  var T=["","","vingt","trente","quarante","cinquante","soixante"];
-  function b100(x,fin){
-    if(x<20) return U[x];
-    if(x<70){ var t=Math.floor(x/10), u=x%10; return T[t]+(u===1?" et un":(u?"-"+U[u]:"")); }
-    if(x<80){ var r=x-60; return "soixante"+(r===11?" et onze":"-"+U[r]); }
-    var r2=x-80;
-    return r2===0 ? (fin?"quatre-vingts":"quatre-vingt") : "quatre-vingt-"+U[r2];
-  }
-  function b1000(x,fin){
+  if(n===0) return "zero";
+  var O=["","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen",
+         "fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
+  var T=["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];
+  function b100(x){ return x<20 ? O[x] : T[Math.floor(x/10)]+(x%10 ? "-"+O[x%10] : ""); }
+  function b1000(x){
     var c=Math.floor(x/100), r=x%100, s="";
-    if(c){ s=(c===1?"cent":U[c]+" cent"); if(!r && c>1 && fin) s+="s"; }
-    if(r){ s+=(s?" ":"")+b100(r,fin); }
+    if(c) s=O[c]+" hundred";
+    if(r) s+=(s?" and ":"")+b100(r);
     return s;
   }
   var p=[], mil=Math.floor(n/1000000), k=Math.floor((n%1000000)/1000), r=n%1000;
-  if(mil) p.push(mil===1?"un million":b1000(mil,false)+" millions");
-  if(k)   p.push(k===1?"mille":b1000(k,false)+" mille");
-  if(r)   p.push(b1000(r,true));
+  if(mil) p.push(b1000(mil)+" million");
+  if(k)   p.push(b1000(k)+" thousand");
+  if(r)   p.push((p.length && r<100 ? "and " : "")+b1000(r));
   return p.join(" ");
 }
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
 
 /* N° de pièce = référence du JOURNAL (ex. 2026-11-003), préfixée PC (sortie) ou RC (entrée).
    Tant que le serveur ne l'a pas attribuée : numéro provisoire. */
 function pieceNo(h){
-  return h.piece ? (h.dir==="out"?"PC-":"RC-")+h.piece : "PROV-"+String(h.cid).slice(-5).toUpperCase();
+  return h.piece ? (h.dir==="out"?"CPV-":"CRV-")+h.piece : "PROV-"+String(h.cid).slice(-5).toUpperCase();
 }
 
 function pieceHTML(h){
   var oc = h.dir==="out";
   var d = new Date(h.ts);
-  var dateTxt = d.toLocaleDateString("fr-FR",{ day:"numeric", month:"short", year:"numeric" });
+  var dateTxt = d.toLocaleDateString("en-GB",{ day:"numeric", month:"short", year:"numeric" });
   var hh = ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
   var no = pieceNo(h);
-  var st = h.sync==="Sent" ? ["sent","ENREGISTRÉE"] : h.sync==="Refused" ? ["refused","REFUSÉE"] : ["pending","EN ATTENTE"];
-  var imput = (h.account ? "Compte "+h.account+" · " : "")+(h.activity||"");
+  var st = h.sync==="Sent" ? ["sent","RECORDED"] : h.sync==="Refused" ? ["refused","REFUSED"] : ["pending","PENDING"];
+  var imput = (h.account ? h.account+" · " : "")+(h.activity||"");
   return '<div class="piece '+(oc?"out":"in")+'" data-act="hentry" data-p="'+esc(h.cid)+'">'+
     '<div class="pc-top">'+
       '<div><div class="pc-co">DIGITAL DREAMS SARL</div>'+
-        '<div class="pc-kind">'+(oc?"Pièce de caisse · Décaissement":"Reçu · Encaissement")+'</div></div>'+
+        '<div class="pc-kind">'+(oc?"Cash payment voucher":"Cash receipt voucher")+'</div></div>'+
       '<div><div class="pc-no mono">N° '+esc(no)+'</div><div class="pc-date">'+esc(dateTxt)+'</div></div>'+
     '</div>'+
     '<div class="pc-tear"></div>'+
     '<div class="pc-body">'+
-      '<div class="pc-line"><span class="k">Motif</span><span class="v">'+esc(h.description||"—")+'</span></div>'+
-      '<div class="pc-line"><span class="k">Nature</span><span class="v">'+esc(h.category)+'</span></div>'+
-      (imput?'<div class="pc-line"><span class="k">Imputation</span><span class="v">'+esc(imput)+'</span></div>':'')+
-      '<div class="pc-line"><span class="k">'+(oc?"Sorti de":"Entré dans")+'</span><span class="v">'+esc(h.source)+'</span></div>'+
+      '<div class="pc-line"><span class="k">Purpose</span><span class="v">'+esc(h.description||"—")+'</span></div>'+
+      '<div class="pc-line"><span class="k">Category</span><span class="v">'+esc(h.category)+'</span></div>'+
+      (imput?'<div class="pc-line"><span class="k">Account</span><span class="v">'+esc(imput)+'</span></div>':'')+
+      '<div class="pc-line"><span class="k">'+(oc?"Paid from":"Received into")+'</span><span class="v">'+esc(h.source)+'</span></div>'+
     '</div>'+
-    '<div class="pc-amt"><span class="k">MONTANT</span><span class="v mono '+(oc?"out":"in")+'">'+esc(h.amount)+' FCFA</span></div>'+
-    '<div class="pc-words">Arrêtée à la somme de '+esc(lettres(h.raw))+' francs CFA.</div>'+
-    '<div class="pc-foot"><span class="pc-sign">Établi par <b>'+esc(h.user)+'</b> · '+hh+
-      (h.dev?' · appareil '+esc(h.dev):'')+'</span>'+
+    '<div class="pc-amt"><span class="k">AMOUNT</span><span class="v mono '+(oc?"out":"in")+'">'+esc(h.amount)+' FCFA</span></div>'+
+    '<div class="pc-words">Amount in words: '+esc(cap(wordsEn(h.raw)))+' CFA francs only.</div>'+
+    '<div class="pc-foot"><span class="pc-sign">Prepared by <b>'+esc(h.user)+'</b> · '+hh+
+      (h.dev?' · device '+esc(h.dev):'')+'</span>'+
       '<span class="stamp '+st[0]+'">'+st[1]+'</span></div>'+
   '</div>';
+}
+
+
+/* ==== PDF START ==== */
+/* Largeurs Helvetica (1/1000 em) des caractères 32 à 126, pour aligner et couper les lignes */
+var HW = [278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,
+  278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,
+  667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,
+  333,500,278,556,500,722,500,500,500,334,260,334,584];
+function chW(c){
+  var k=c.charCodeAt(0);
+  if(k>=32 && k<=126) return HW[k-32];
+  if("ÉÈÊËÀÂÄÎÏÔÖÙÛÜ".indexOf(c)>=0) return 667;
+  if("îï".indexOf(c)>=0) return 278;
+  if(c==="ç") return 500;
+  return 556;
+}
+function tw(s,size,bold){ var w=0; for(var i=0;i<s.length;i++){ w+=chW(s.charAt(i)); } return w*size/1000*(bold?1.06:1); }
+function wrapText(s,size,maxW,bold){
+  var words=String(s).split(" "), lines=[], cur="";
+  words.forEach(function(w){
+    var t = cur ? cur+" "+w : w;
+    if(tw(t,size,bold)<=maxW || !cur){ cur=t; } else { lines.push(cur); cur=w; }
+  });
+  if(cur) lines.push(cur);
+  return lines;
+}
+function pdfStr(s){
+  var m={8217:0x92,8212:0x97,8211:0x96,8220:0x93,8221:0x94,8230:0x85,8364:0x80,8722:0x2D,8239:0x20,160:0x20};
+  var out="";
+  for(var i=0;i<s.length;i++){
+    var c=s.charCodeAt(i);
+    if(m[c]!==undefined) c=m[c]; else if(c>255) c=63;
+    var ch=String.fromCharCode(c);
+    out += (ch==="("||ch===")"||ch==="\\") ? "\\"+ch : ch;
+  }
+  return "("+out+")";
+}
+function pad2(n){ return ("0"+n).slice(-2); }
+
+function pieceContent(h){
+  var W=595, H=420, o="";
+  function Y(y){ return (H-y).toFixed(2); }
+  function col(c){ return c[0]+" "+c[1]+" "+c[2]; }
+  var oc = h.dir==="out";
+  var RED=[0.604,0.173,0.173], GREEN=[0.086,0.396,0.204], AMB=[0.706,0.325,0.035];
+  var ink=[0.11,0.098,0.09], gray=[0.47,0.45,0.43], light=[0.93,0.92,0.9], main = oc?RED:GREEN;
+  function text(font,size,x,y,s,c){ o+="BT /"+font+" "+size+" Tf "+col(c||ink)+" rg "+x.toFixed(2)+" "+Y(y)+" Td "+pdfStr(s)+" Tj ET\n"; }
+  function textR(font,size,xr,y,s,c,bold){
+    var w = (font==="F3"||font==="F5") ? s.length*size*0.6 : tw(s,size,bold);
+    text(font,size,xr-w,y,s,c);
+  }
+  function rectF(x,y,w,hh,c){ o+=col(c)+" rg "+x+" "+Y(y+hh)+" "+w+" "+hh+" re f\n"; }
+  function rectS(x,y,w,hh,c,lw){ o+=col(c)+" RG "+(lw||0.8)+" w "+x+" "+Y(y+hh)+" "+w+" "+hh+" re S\n"; }
+  function line(x1,y1,x2,y2,c,lw,dash){
+    o+=col(c)+" RG "+(lw||0.6)+" w "+(dash?"["+dash+"] 0 d ":"")+x1+" "+Y(y1)+" m "+x2+" "+Y(y2)+" l S "+(dash?"[] 0 d":"")+"\n";
+  }
+
+  var d=new Date(h.ts);
+  var dateTxt=pad2(d.getDate())+"/"+pad2(d.getMonth()+1)+"/"+d.getFullYear();
+  var timeTxt=pad2(d.getHours())+":"+pad2(d.getMinutes());
+  var no=pieceNo(h);
+  var amountTxt=(oc?"- ":"+ ")+String(fmt(h.raw)).replace(/\u202f|\u00a0/g," ")+" FCFA";
+  var st = h.sync==="Sent" ? ["RECORDED",GREEN] : h.sync==="Refused" ? ["REFUSED",RED] : ["PENDING",AMB];
+  var imput=(h.account?h.account+" · ":"")+(h.activity||"");
+
+  // cadre + bande de couleur
+  rectS(24,24,547,372,[0.85,0.83,0.8],0.9);
+  rectF(24,24,6,372,main);
+
+  // en-tête
+  text("F2",10.5,46,54,"DIGITAL DREAMS SARL",gray);
+  text("F2",18,46,82,oc?"CASH PAYMENT VOUCHER":"CASH RECEIPT VOUCHER",ink);
+  text("F1",10.5,46,98,oc?"Cash out":"Cash in",gray);
+  textR("F3",14,549,56,"No. "+no,ink);
+  textR("F1",10.5,549,74,dateTxt+" · "+timeTxt,gray);
+  line(24,112,571,112,[0.78,0.76,0.73],1,"4 3");
+
+  // champs
+  var y=136;
+  function field(label,value){
+    text("F1",9,46,y,label.toUpperCase(),gray);
+    var ls=wrapText(value||"—",11,400,false);
+    ls.slice(0,2).forEach(function(t,i){ text("F1",11,140,y+i*14,t,ink); });
+    y += 14*Math.min(ls.length,2) + 8;
+  }
+  field("Purpose",h.description);
+  field("Category",h.category);
+  if(imput) field("Account",imput);
+  field(oc?"Paid from":"Received into",h.source);
+
+  // montant
+  var ay=Math.max(y+4,262);
+  rectF(46,ay,503,44,light);
+  text("F1",9,58,ay+17,"AMOUNT",gray);
+  textR("F5",24,538,ay+32,amountTxt,main);
+  // cachet
+  var stw=tw(st[0],9.5,true)+16;
+  o+="q 0.9945 -0.1045 0.1045 0.9945 "+(175).toFixed(2)+" "+Y(ay+36)+" cm\n";
+  o+=col(st[1])+" RG 1.3 w 0 0 "+stw.toFixed(2)+" 17 re S\n";
+  o+="BT /F2 9.5 Tf "+col(st[1])+" rg 8 5 Td "+pdfStr(st[0])+" Tj ET\nQ\n";
+
+  // montant en lettres
+  var words="Amount in words: "+cap(wordsEn(h.raw))+" CFA francs only.";
+  var wl=wrapText(words,10.5,500,false);
+  wl.slice(0,2).forEach(function(t,i){ text("F4",10.5,46,ay+62+i*13,t,[0.35,0.33,0.31]); });
+
+  // signatures
+  var sy=336;
+  rectS(46,sy,243,48,[0.85,0.83,0.8],0.7);
+  text("F1",8.5,54,sy+13,"PREPARED BY",gray);
+  text("F2",11,54,sy+28,"Mrs "+h.user,ink);
+  text("F1",7.5,54,sy+40,"Electronically signed on "+dateTxt+" at "+timeTxt+(h.dev?" · device "+h.dev:""),gray);
+  rectS(306,sy,243,48,[0.85,0.83,0.8],0.7);
+  text("F1",8.5,314,sy+13,"APPROVED BY (MANAGEMENT)",gray);
+
+  text("F1",7,46,408,"Generated by DiDreams Cash Log · "+no,[0.6,0.58,0.55]);
+  return o;
+}
+
+function piecesToPdf(list){
+  var objs=["",""];
+  function add(s){ objs.push(s); return objs.length; }
+  var f1=add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
+  var f2=add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+  var f3=add("<< /Type /Font /Subtype /Type1 /BaseFont /Courier-Bold /Encoding /WinAnsiEncoding >>");
+  var f4=add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>");
+  var f5=add("<< /Type /Font /Subtype /Type1 /BaseFont /Courier-Bold /Encoding /WinAnsiEncoding >>");
+  var res="/Resources << /Font << /F1 "+f1+" 0 R /F2 "+f2+" 0 R /F3 "+f3+" 0 R /F4 "+f4+" 0 R /F5 "+f5+" 0 R >> >>";
+  var kids=[];
+  list.forEach(function(h){
+    var content=pieceContent(h);
+    var c=add("<< /Length "+content.length+" >>\nstream\n"+content+"endstream");
+    var p=add("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 420] /Contents "+c+" 0 R "+res+" >>");
+    kids.push(p+" 0 R");
+  });
+  objs[0]="<< /Type /Catalog /Pages 2 0 R >>";
+  objs[1]="<< /Type /Pages /Kids ["+kids.join(" ")+"] /Count "+kids.length+" >>";
+  var pdf="%PDF-1.4\n", offs=[];
+  objs.forEach(function(ob,i){ offs.push(pdf.length); pdf+=(i+1)+" 0 obj\n"+ob+"\nendobj\n"; });
+  var xr=pdf.length;
+  pdf+="xref\n0 "+(objs.length+1)+"\n0000000000 65535 f \n";
+  offs.forEach(function(of){ pdf+=("0000000000"+of).slice(-10)+" 00000 n \n"; });
+  pdf+="trailer\n<< /Size "+(objs.length+1)+" /Root 1 0 R >>\nstartxref\n"+xr+"\n%%EOF";
+  var u=new Uint8Array(pdf.length);
+  for(var i=0;i<pdf.length;i++){ u[i]=pdf.charCodeAt(i)&255; }
+  return u;
+}
+/* ==== PDF END ==== */
+
+function pdfBlob(list){ return new Blob([piecesToPdf(list)],{ type:"application/pdf" }); }
+function saveBlob(blob,name){
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(e){} a.remove(); },1500);
+}
+function canShareFiles(){
+  try{ return !!(navigator.canShare && window.File &&
+    navigator.canShare({ files:[ new File(["x"],"a.pdf",{ type:"application/pdf" }) ] })); }
+  catch(e){ return false; }
+}
+function findEntry(cid){ return state.history.filter(function(x){ return x.cid===cid; })[0]; }
+function downloadPiece(cid){
+  var h=findEntry(cid); if(!h) return;
+  saveBlob(pdfBlob([h]), pieceNo(h)+".pdf");
+  toast("Voucher downloaded ✓");
+}
+function sharePiece(cid){
+  var h=findEntry(cid); if(!h) return;
+  var f=new File([pdfBlob([h])], pieceNo(h)+".pdf", { type:"application/pdf" });
+  navigator.share({ files:[f], title:pieceNo(h) }).catch(function(){});
+}
+function downloadAll(){
+  var list=state.history.slice(0,100).reverse();
+  if(!list.length) return;
+  var d=new Date();
+  saveBlob(pdfBlob(list),"Cash-vouchers-"+d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate())+".pdf");
+  toast(list.length+(list.length>1?" vouchers downloaded":" voucher downloaded")+" ✓");
 }
 
 /* -------- écrans plein cadre : enrôlement, verrou -------- */
 function enrollHTML(){
   return '<div class="lockscreen">'+
     '<div class="logo">DD</div>'+
-    '<h1>Activer cet appareil</h1>'+
-    '<p>Demandez un code d’invitation à la personne qui gère le classeur, puis saisissez-le ici. Il est valable 15 minutes et ne sert qu’une fois.</p>'+
+    '<h1>Activate this device</h1>'+
+    '<p>Ask for an invitation code from the person who manages the workbook, then enter it here. It is valid for 15 minutes and works once.</p>'+
     '<div class="notebox" style="min-height:56px;align-items:center;width:100%;max-width:320px">'+
       '<input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="'+esc(state.enrollCode)+'" '+
-      'placeholder="Code à 6 chiffres" style="text-align:center;font-size:20px;letter-spacing:.3em"></div>'+
+      'placeholder="6-digit code" style="text-align:center;font-size:20px;letter-spacing:.3em"></div>'+
     (state.enrollErr?'<p style="color:var(--out)">'+esc(state.enrollErr)+'</p>':'')+
-    '<button class="done" data-act="enroll">'+(state.busy?"Vérification…":"Activer")+'</button>'+
-    '<p style="font-size:11px;color:var(--faint)">appli v17 · serveur …'+esc(ENDPOINT.slice(-10,-5))+'</p>'+
+    '<button class="done" data-act="enroll">'+(state.busy?"Checking…":"Activate")+'</button>'+
+    '<p style="font-size:11px;color:var(--faint)">app v17 · server …'+esc(ENDPOINT.slice(-10,-5))+'</p>'+
   '</div>'+toastHTML(false);
 }
 function bioOfferHTML(){
   return '<div class="lockscreen">'+
     '<div class="logo">DD</div>'+
-    '<h1>Verrouiller avec l’empreinte ou Face ID</h1>'+
-    '<p>Mrs '+esc(state.user)+', cet appareil est activé. Le verrou protège vos saisies si quelqu’un prend votre téléphone.</p>'+
-    '<button class="done" data-act="bioenable">Activer le verrou</button>'+
-    '<button class="cancelbtn" data-act="biolater">Plus tard</button>'+
+    '<h1>Lock with fingerprint or Face ID</h1>'+
+    '<p>Mrs '+esc(state.user)+', this device is activated. The lock protects your entries if someone takes your phone.</p>'+
+    '<button class="done" data-act="bioenable">Turn on the lock</button>'+
+    '<button class="cancelbtn" data-act="biolater">Later</button>'+
   '</div>'+toastHTML(false);
 }
 function lockHTML(){
   return '<div class="lockscreen">'+
     '<div class="logo">DD</div>'+
-    '<h1>Application verrouillée</h1>'+
-    '<p>Mrs '+esc(state.user)+' · appareil '+esc(state.device)+'</p>'+
+    '<h1>App locked</h1>'+
+    '<p>Mrs '+esc(state.user)+' · device '+esc(state.device)+'</p>'+
     (state.lockErr?'<p style="color:var(--out)">'+esc(state.lockErr)+'</p>':'')+
-    '<button class="done" data-act="unlock">Déverrouiller</button>'+
+    '<button class="done" data-act="unlock">Unlock</button>'+
   '</div>'+toastHTML(false);
 }
 
@@ -660,6 +838,10 @@ function entryHTML(){
 function historyHTML(){
   var t = todayTotals();
   var body;
+  var bar = '<div class="histbar">'+
+    '<button class="backlink" data-act="screen" data-p="entry">‹ Back to entry</button>'+
+    (state.history.length?'<button class="backlink" data-act="dlall">Download all (PDF)</button>':'')+
+  '</div>';
   if(!state.history.length){
     body = '<div class="emptystate">No entries yet on this phone.<br>Record one from the New entry tab.</div>';
   } else {
@@ -671,7 +853,7 @@ function historyHTML(){
       state.history.map(pieceHTML).join("")+
     '</div>';
   }
-  return '<div class="scroll">'+body+'</div>';
+  return '<div class="scroll">'+bar+body+'</div>';
 }
 function mobileHTML(){
   var entry = state.screen==="entry";
@@ -765,12 +947,12 @@ function pickerOptionsHTML(){
 }
 function deviceInner(){
   var bio = !!ls("cl_bio");
-  return '<div class="entrysum"><b>Mrs '+esc(state.user)+'</b><br>Appareil <span class="mono">'+esc(state.device)+'</span></div>'+
-    '<div class="sheetnote">Les pièces établies depuis ce téléphone sont signées au nom de cet appareil. Il ne peut pas saisir pour quelqu’un d’autre.</div>'+
+  return '<div class="entrysum"><b>Mrs '+esc(state.user)+'</b><br>Device <span class="mono">'+esc(state.device)+'</span></div>'+
+    '<div class="sheetnote">Vouchers created from this phone are signed in the name of this device. It cannot enter on behalf of someone else.</div>'+
     (bioCapable() ? (bio
-      ? '<button class="done" data-act="lock">Verrouiller maintenant</button>'
-      : '<button class="done" data-act="bioenable">Activer empreinte / Face ID</button>') : '')+
-    '<button class="cancelbtn" data-act="close">Fermer</button>';
+      ? '<button class="done" data-act="lock">Lock now</button>'
+      : '<button class="done" data-act="bioenable">Turn on fingerprint / Face ID</button>') : '')+
+    '<button class="cancelbtn" data-act="close">Close</button>';
 }
 function pickerTitle(){
   if(state.picker==="category") return "What was it?";
@@ -782,21 +964,23 @@ function noteBoxHTML(){
 
 function entrySheetInner(){
   var h = state.history.filter(function(x){ return x.cid===state.selected; })[0];
-  if(!h) return '<div class="sheetnote">Pièce introuvable.</div>';
+  if(!h) return '<div class="sheetnote">Voucher not found.</div>';
   var pending = queue().some(function(x){ return x.cid===h.cid; });
   var note = pending
-    ? "Pas encore envoyée : la retirer l’annule, rien n’arrive dans le classeur."
-    : "Déjà enregistrée dans le classeur. La retirer ici ne l’efface pas du classeur : une pièce numérotée ne se supprime pas, elle s’annule par une écriture contraire.";
+    ? "Not sent yet: removing it cancels it, nothing reaches the workbook."
+    : "Already recorded in the workbook. Removing it here does not delete it from the workbook: a numbered voucher is never deleted, it is cancelled by a reversing entry.";
   return pieceHTML(h).replace('data-act="hentry"','data-act="stop"')+
+    '<button class="done" data-act="dl" data-p="'+esc(h.cid)+'">Download voucher (PDF)</button>'+
+    (canShareFiles()?'<button class="cancelbtn" data-act="share" data-p="'+esc(h.cid)+'">Share</button>':'')+
     '<div class="sheetnote">'+note+'</div>'+
-    '<button class="delbtn" data-act="del" data-p="'+esc(h.cid)+'">Retirer de ce téléphone</button>'+
-    '<button class="cancelbtn" data-act="close">Fermer</button>';
+    '<button class="delbtn" data-act="del" data-p="'+esc(h.cid)+'">Remove from this phone</button>'+
+    '<button class="cancelbtn" data-act="close">Close</button>';
 }
 
 function sheetsHTML(){
   var s = state.sheet; if(!s) return "";
   var inner;
-  if(s==="entry"){ inner = '<h2>Pièce</h2>'+entrySheetInner(); }
+  if(s==="entry"){ inner = '<h2>Voucher</h2>'+entrySheetInner(); }
   else if(s==="keypad"){
     inner = '<div class="kamt"><span class="k">Amount</span><span class="v mono">'+esc(fmt(state.digits))+'</span></div>'+
       '<div class="keypad">'+
@@ -812,7 +996,7 @@ function sheetsHTML(){
       '<div class="sub">Written as-is into the Google Sheet.</div>'+
       '<button class="done" data-act="close">Done</button>';
   } else if(s==="users"){
-    inner = '<h2>Cet appareil</h2>'+deviceInner();
+    inner = '<h2>This device</h2>'+deviceInner();
   }
   return '<div class="backdrop" data-act="backdrop"><div class="sheet" data-act="stop">'+inner+'</div></div>';
 }
@@ -821,11 +1005,11 @@ function sheetsHTML(){
 function dialogHTML(){
   var s = state.sheet; if(!s || s==="keypad") return "";
   var title, inner;
-  if(s==="entry"){ title = "Pièce"; inner = entrySheetInner(); }
+  if(s==="entry"){ title = "Voucher"; inner = entrySheetInner(); }
   else if(s==="picker"){ title = pickerTitle(); inner = pickerOptionsHTML(); }
   else if(s==="note"){ title = "What was it for?"; inner = noteBoxHTML()+
     '<div class="sub">Written as-is into the Google Sheet.</div><button class="done" data-act="close">Done</button>'; }
-  else if(s==="users"){ title = "Cet appareil"; inner = deviceInner(); }
+  else if(s==="users"){ title = "This device"; inner = deviceInner(); }
   return '<div class="dialog-back" data-act="backdrop"><div class="dialog" data-act="stop"><h2>'+esc(title)+'</h2>'+inner+'</div></div>';
 }
 
@@ -853,14 +1037,25 @@ function render(){
 }
 
 /* -------- event delegation -------- */
+var prevSheetWatch = { was:false };
 document.addEventListener("click", function(e){
   var t = e.target.closest("[data-act]"); if(!t) return;
   var act = t.getAttribute("data-act"), p = t.getAttribute("data-p");
   if(act==="stop"){ return; }
+  var prevSheet = state.sheet;
   switch(act){
     case "backdrop": state.sheet=null; state.picker=null; state.focus=null; state.selected=null; render(); break;
     case "dir": setDirection(p)(); break;
-    case "screen": state.screen=p; render(); break;
+    case "screen":
+      if(p==="history" && state.screen!=="history"){
+        state.screen="history"; try{ history.pushState({ v:"h" },""); }catch(e){} render();
+      } else if(p==="entry" && state.screen==="history"){
+        if(history.state && history.state.v==="h"){ history.back(); } else { state.screen="entry"; render(); }
+      }
+      break;
+    case "dl": downloadPiece(p); break;
+    case "share": sharePiece(p); break;
+    case "dlall": downloadAll(); break;
     case "keypad": state.sheet="keypad"; render(); break;
     case "key": press(p)(); break;
     case "picker": state.sheet="picker"; state.picker=p; render(); break;
@@ -877,20 +1072,37 @@ document.addEventListener("click", function(e){
       setQueue(queue().filter(function(x){ return x.cid!==p; }));
       saveHistory();
       state.sheet=null; state.selected=null;
-      toast("Pièce retirée de ce téléphone"); break;
+      toast("Voucher removed from this phone"); break;
     case "enroll": doEnroll(); break;
     case "bioenable":
       bioRegister().then(function(){
-        state.bioOffer=false; state.sheet=null; toast("Verrou biométrique activé ✓");
-      }).catch(function(){ toast("Activation annulée ou indisponible sur cet appareil"); });
+        state.bioOffer=false; state.sheet=null; toast("Biometric lock enabled ✓");
+      }).catch(function(){ toast("Activation cancelled or unavailable on this device"); });
       break;
     case "biolater": state.bioOffer=false; render(); break;
     case "lock": state.sheet=null; state.locked=true; state.lockErr=""; render(); break;
     case "unlock":
       bioUnlock().then(function(){ state.locked=false; state.lockErr=""; render(); flush(); })
-        .catch(function(){ state.lockErr="Vérification annulée ou échouée"; render(); });
+        .catch(function(){ state.lockErr="Verification cancelled or failed"; render(); });
       break;
   }
+});
+
+/* le bouton « retour » du téléphone ferme la feuille ouverte, puis revient de l'historique à la saisie */
+document.addEventListener("click", function(){
+  try{
+    if(!prevSheetWatch.was && state.sheet){ history.pushState({ v: state.screen==="history" ? "hs" : "s" },""); }
+    else if(prevSheetWatch.was && !state.sheet && history.state && (history.state.v==="s"||history.state.v==="hs")){ history.back(); }
+  }catch(e){}
+  prevSheetWatch.was = !!state.sheet;
+}, false);
+window.addEventListener("popstate", function(e){
+  var v = e.state && e.state.v;
+  if(v==="s" || v==="hs"){ return; }
+  state.sheet=null; state.picker=null; state.focus=null; state.selected=null;
+  state.screen = (v==="h") ? "history" : "entry";
+  prevSheetWatch.was = false;
+  render();
 });
 
 /* text inputs: update state without a disruptive full re-render on every keystroke */
