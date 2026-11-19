@@ -102,35 +102,33 @@ input{font-family:inherit}
 .badge{font-size:11px;padding:2px 8px;border-radius:99px}
 .badge.sent{background:var(--muted);color:var(--dim)} .badge.pending{background:var(--warn-tint);color:var(--warn-ink)}
 
-/* pièce de caisse électronique */
-.piece{margin:0 0 14px;background:var(--raised);border:1px solid var(--border);border-radius:14px;position:relative;overflow:hidden;cursor:pointer}
-.piece::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--out)}
-.piece.in::before{background:var(--in)}
-.pc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:13px 14px 11px 18px}
-.pc-co{font-size:10.5px;letter-spacing:.09em;font-weight:600;color:var(--secondary)}
-.pc-kind{font-size:13px;font-weight:600;margin-top:2px}
-.pc-no{font-size:12px;text-align:right;font-weight:500}
-.pc-date{font-size:11px;color:var(--faint);margin-top:2px;text-align:right}
-.pc-tear{position:relative;border-top:1.5px dashed var(--border-strong)}
-.pc-tear::before,.pc-tear::after{content:"";position:absolute;top:-8px;width:14px;height:14px;border-radius:50%;background:var(--surface);border:1px solid var(--border)}
-.pc-tear::before{left:-8px}.pc-tear::after{right:-8px}
-.pc-body{padding:10px 14px 4px 18px}
+/* pièce de caisse électronique — charte DiDreams : bleu #14308C, jaune #FFC21A, gris, noir, blanc */
+.piece{margin:0 0 14px;background:#fff;border:1px solid var(--border);border-radius:14px;position:relative;overflow:hidden;cursor:pointer}
+.pc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:13px 14px 11px 16px;
+  background:#14308C;border-bottom:3px solid #FFC21A}
+.pc-co{font-size:10.5px;letter-spacing:.09em;font-weight:600;color:#fff}
+.pc-kind{font-size:13px;font-weight:600;margin-top:2px;color:#fff}
+.pc-no{font-size:12px;text-align:right;font-weight:500;color:#fff}
+.pc-date{font-size:11px;margin-top:2px;text-align:right;color:#DCE3F7}
+.pc-body{padding:10px 14px 4px 16px}
 .pc-line{display:flex;gap:10px;font-size:12.5px;padding:3px 0;line-height:1.4}
-.pc-line .k{width:82px;flex:none;color:var(--faint)}
-.pc-line .v{flex:1;min-width:0;color:var(--ink)}
-.pc-amt{display:flex;justify-content:space-between;align-items:baseline;padding:8px 14px 0 18px}
-.pc-amt .k{font-size:10.5px;letter-spacing:.08em;color:var(--faint)}
-.pc-amt .v{font-size:20px;letter-spacing:-.01em}
-.pc-amt .v.out{color:var(--out)}.pc-amt .v.in{color:var(--in)}
-.pc-words{padding:2px 14px 10px 18px;font-size:11.5px;font-style:italic;color:var(--dim);line-height:1.4}
-.pc-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 14px 12px 18px;
-  border-top:1px solid var(--hairline);font-size:11px;color:var(--faint)}
-.pc-sign b{color:var(--secondary);font-weight:500}
+.pc-line .k{width:82px;flex:none;color:#6B6B6B}
+.pc-line .v{flex:1;min-width:0;color:#1A1A1A}
+.pc-amt{display:flex;justify-content:space-between;align-items:baseline;margin:6px 14px 0 16px;padding:8px 12px;
+  background:#F2F2F2;border-left:4px solid #14308C}
+.pc-amt .k{font-size:10.5px;letter-spacing:.08em;color:#6B6B6B}
+.pc-amt .v{font-size:20px;letter-spacing:-.01em;color:#14308C}
+.pc-words{padding:6px 14px 10px 16px;font-size:11.5px;font-style:italic;color:#6B6B6B;line-height:1.4}
+.pc-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 14px 12px 16px;
+  border-top:1px solid #E5E5E5;font-size:11px;color:#6B6B6B}
+.pc-sign{line-height:1.5}
+.pc-sign b{color:#1A1A1A;font-weight:600}
+.pc-sign span{font-size:10px}
 .stamp{border:1.5px solid;border-radius:6px;padding:2px 8px;font-size:10px;letter-spacing:.09em;font-weight:600;
   transform:rotate(-6deg);white-space:nowrap}
-.stamp.sent{color:var(--in);border-color:var(--in)}
-.stamp.pending{color:var(--warn);border-color:var(--warn)}
-.stamp.refused{color:var(--out);border-color:var(--out)}
+.stamp.sent{color:#14308C;border-color:#14308C}
+.stamp.pending{background:#FFC21A;color:#1A1A1A;border-color:#FFC21A}
+.stamp.refused{color:#1A1A1A;border-color:#1A1A1A}
 
 /* écrans plein cadre : enrôlement, verrou */
 .lockscreen{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
@@ -268,7 +266,7 @@ var SRC_MAP = { "Cash box":"CASH", "UBA account":"UBA", "MoMo":"COY-OM",
 /* -------- state -------- */
 var state = {
   screen:"entry", direction:"out", digits:"", category:null, source:null, description:"",
-  sheet:null, picker:null, history:[], focus:null, selected:null,
+  sheet:null, picker:null, history:[], focus:null, selected:null, date:null,
   /* identité : fixée par l'appareil enrôlé, jamais choisie dans l'appli */
   user:null, device:null, secret:null, locked:false, bioOffer:false,
   enrollCode:"", enrollErr:"", busy:false, lockErr:""
@@ -425,6 +423,7 @@ function submit(){
   var raw = state.digits;
   var online = navigator.onLine;
   var now = new Date();
+  var vdate = state.date || todayISO();
   var cid = "cl-" + now.getTime() + "-" + Math.random().toString(36).slice(2,7);
   var hh = ("0"+now.getHours()).slice(-2)+":"+("0"+now.getMinutes()).slice(-2);
 
@@ -432,7 +431,7 @@ function submit(){
     cid:cid, dir:state.direction, category:state.category,
     raw:raw, amount:(state.direction==="out"?"−":"+")+fmt(raw),
     description:state.description.trim(), source:state.source, user:state.user, dev:state.device,
-    account:cat.account, activity:cat.activity, piece:"",
+    account:cat.account, activity:cat.activity, piece:"", vdate:vdate,
     meta:state.user+" · "+hh+" · "+state.source, ts:now.toISOString(),
     sync:"Pending"            // passe à « Sent » seulement quand le serveur a numéroté la pièce
   };
@@ -442,7 +441,7 @@ function submit(){
     account:cat.account, activity:ACT_MAP[cat.activity]||cat.activity, category:cat.label,
     source:SRC_MAP[state.source]||state.source, description:state.description.trim(),
     counterparty:"", receipt:"",
-    date:now.getFullYear()+"-"+("0"+(now.getMonth()+1)).slice(-2)+"-"+("0"+now.getDate()).slice(-2),
+    date:vdate,
     person:state.user, cid:cid
   };
 
@@ -524,13 +523,17 @@ function fieldsHTML(){
   var srcVal = state.source
     ? '<span class="val">'+esc(state.source)+'</span>'
     : '<span class="val empty">Choose</span>';
+  var dateVal = (!state.date || state.date===todayISO())
+    ? '<span class="val">Today</span>'
+    : '<span class="val" style="color:var(--warn)">'+esc(dEn(dparse(state.date)))+'</span>';
   var noteVal = state.description
     ? '<span class="val">'+esc(state.description)+'</span>'
     : '<span class="val empty">Add a note</span>';
   return ''+
     '<button class="row" data-act="picker" data-p="category"><span class="lbl">What was it?</span>'+catVal+'<span class="chev">›</span></button>'+
     '<button class="row" data-act="picker" data-p="source"><span class="lbl">'+(out?"Out of":"Into")+'</span>'+srcVal+'<span class="chev">›</span></button>'+
-    '<button class="row" data-act="note"><span class="lbl">For what</span>'+noteVal+'<span class="chev">›</span></button>';
+    '<button class="row" data-act="note"><span class="lbl">For what</span>'+noteVal+'<span class="chev">›</span></button>'+
+    '<button class="row" data-act="date"><span class="lbl">Date</span>'+dateVal+'<span class="chev">›</span></button>';
 }
 function derivedHTML(cls){
   var c = currentCat(); if(!c) return "";
@@ -575,8 +578,8 @@ function pieceNo(h){
 function pieceHTML(h){
   var oc = h.dir==="out";
   var d = new Date(h.ts);
-  var dateTxt = d.toLocaleDateString("en-GB",{ day:"numeric", month:"short", year:"numeric" });
-  var hh = ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
+  var dateTxt = dEn(h.vdate ? dparse(h.vdate) : d);
+  var hh = pad2(d.getHours())+":"+pad2(d.getMinutes());
   var no = pieceNo(h);
   var st = h.sync==="Sent" ? ["sent","RECORDED"] : h.sync==="Refused" ? ["refused","REFUSED"] : ["pending","PENDING"];
   var imput = (h.account ? h.account+" · " : "")+(h.activity||"");
@@ -584,25 +587,30 @@ function pieceHTML(h){
     '<div class="pc-top">'+
       '<div><div class="pc-co">DIGITAL DREAMS SARL</div>'+
         '<div class="pc-kind">'+(oc?"Cash payment voucher":"Cash receipt voucher")+'</div></div>'+
-      '<div><div class="pc-no mono">N° '+esc(no)+'</div><div class="pc-date">'+esc(dateTxt)+'</div></div>'+
+      '<div><div class="pc-no mono">No. '+esc(no)+'</div><div class="pc-date">'+esc(dateTxt)+'</div></div>'+
     '</div>'+
-    '<div class="pc-tear"></div>'+
     '<div class="pc-body">'+
       '<div class="pc-line"><span class="k">Purpose</span><span class="v">'+esc(h.description||"—")+'</span></div>'+
       '<div class="pc-line"><span class="k">Category</span><span class="v">'+esc(h.category)+'</span></div>'+
       (imput?'<div class="pc-line"><span class="k">Account</span><span class="v">'+esc(imput)+'</span></div>':'')+
       '<div class="pc-line"><span class="k">'+(oc?"Paid from":"Received into")+'</span><span class="v">'+esc(h.source)+'</span></div>'+
     '</div>'+
-    '<div class="pc-amt"><span class="k">AMOUNT</span><span class="v mono '+(oc?"out":"in")+'">'+esc(h.amount)+' FCFA</span></div>'+
+    '<div class="pc-amt"><span class="k">AMOUNT</span><span class="v mono">'+esc(h.amount)+' FCFA</span></div>'+
     '<div class="pc-words">Amount in words: '+esc(cap(wordsEn(h.raw)))+' CFA francs only.</div>'+
-    '<div class="pc-foot"><span class="pc-sign">Prepared by <b>'+esc(h.user)+'</b> · '+hh+
-      (h.dev?' · device '+esc(h.dev):'')+'</span>'+
+    '<div class="pc-foot"><div class="pc-sign">Prepared &amp; approved by <b>'+esc(PREPARER)+'</b><br>'+
+      '<span>Entered by '+esc(h.user)+' · '+hh+(h.dev?' · device '+esc(h.dev):'')+'</span></div>'+
       '<span class="stamp '+st[0]+'">'+st[1]+'</span></div>'+
   '</div>';
 }
 
-
 /* ==== PDF START ==== */
+var PREPARER = "Mrs Monique", PREPARER_TITLE = "Accountant & Operations Manager";
+var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function pad2(n){ return ("0"+n).slice(-2); }
+function dparse(s){ var p=String(s).split("-"); return new Date(Number(p[0]),Number(p[1])-1,Number(p[2])); }
+function dEn(d){ return d.getDate()+" "+MON[d.getMonth()]+" "+d.getFullYear(); }
+function todayISO(){ var d=new Date(); return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
+function minISO(){ var d=new Date(Date.now()-380*86400000); return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
 /* Largeurs Helvetica (1/1000 em) des caractères 32 à 126, pour aligner et couper les lignes */
 var HW = [278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,
   278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,
@@ -637,52 +645,42 @@ function pdfStr(s){
   }
   return "("+out+")";
 }
-function pad2(n){ return ("0"+n).slice(-2); }
-
 function pieceContent(h){
   var W=595, H=420, o="";
   function Y(y){ return (H-y).toFixed(2); }
   function col(c){ return c[0]+" "+c[1]+" "+c[2]; }
   var oc = h.dir==="out";
-  var RED=[0.604,0.173,0.173], GREEN=[0.086,0.396,0.204], AMB=[0.706,0.325,0.035];
-  var ink=[0.11,0.098,0.09], gray=[0.47,0.45,0.43], light=[0.93,0.92,0.9], main = oc?RED:GREEN;
-  function text(font,size,x,y,s,c){ o+="BT /"+font+" "+size+" Tf "+col(c||ink)+" rg "+x.toFixed(2)+" "+Y(y)+" Td "+pdfStr(s)+" Tj ET\n"; }
+  var BLUE=[0.078,0.188,0.549], YEL=[1,0.761,0.102], INK=[0.1,0.1,0.1], GRAY=[0.42,0.42,0.42],
+      LIGHT=[0.949,0.949,0.949], LINE=[0.8,0.8,0.8], WHITE=[1,1,1];
+  function text(font,size,x,y,s,c){ o+="BT /"+font+" "+size+" Tf "+col(c||INK)+" rg "+x.toFixed(2)+" "+Y(y)+" Td "+pdfStr(s)+" Tj ET\n"; }
   function textR(font,size,xr,y,s,c,bold){
     var w = (font==="F3"||font==="F5") ? s.length*size*0.6 : tw(s,size,bold);
     text(font,size,xr-w,y,s,c);
   }
   function rectF(x,y,w,hh,c){ o+=col(c)+" rg "+x+" "+Y(y+hh)+" "+w+" "+hh+" re f\n"; }
   function rectS(x,y,w,hh,c,lw){ o+=col(c)+" RG "+(lw||0.8)+" w "+x+" "+Y(y+hh)+" "+w+" "+hh+" re S\n"; }
-  function line(x1,y1,x2,y2,c,lw,dash){
-    o+=col(c)+" RG "+(lw||0.6)+" w "+(dash?"["+dash+"] 0 d ":"")+x1+" "+Y(y1)+" m "+x2+" "+Y(y2)+" l S "+(dash?"[] 0 d":"")+"\n";
-  }
 
   var d=new Date(h.ts);
-  var dateTxt=pad2(d.getDate())+"/"+pad2(d.getMonth()+1)+"/"+d.getFullYear();
-  var timeTxt=pad2(d.getHours())+":"+pad2(d.getMinutes());
+  var dateTxt=dEn(h.vdate ? dparse(h.vdate) : d);
+  var entTxt=dEn(d)+" at "+pad2(d.getHours())+":"+pad2(d.getMinutes());
   var no=pieceNo(h);
   var amountTxt=(oc?"- ":"+ ")+String(fmt(h.raw)).replace(/\u202f|\u00a0/g," ")+" FCFA";
-  var st = h.sync==="Sent" ? ["RECORDED",GREEN] : h.sync==="Refused" ? ["REFUSED",RED] : ["PENDING",AMB];
+  var st = h.sync==="Sent" ? ["RECORDED","line",BLUE] : h.sync==="Refused" ? ["REFUSED","line",INK] : ["PENDING","fill",YEL];
   var imput=(h.account?h.account+" · ":"")+(h.activity||"");
 
-  // cadre + bande de couleur
-  rectS(24,24,547,372,[0.85,0.83,0.8],0.9);
-  rectF(24,24,6,372,main);
-
-  // en-tête
-  text("F2",10.5,46,54,"DIGITAL DREAMS SARL",gray);
-  text("F2",18,46,82,oc?"CASH PAYMENT VOUCHER":"CASH RECEIPT VOUCHER",ink);
-  text("F1",10.5,46,98,oc?"Cash out":"Cash in",gray);
-  textR("F3",14,549,56,"No. "+no,ink);
-  textR("F1",10.5,549,74,dateTxt+" · "+timeTxt,gray);
-  line(24,112,571,112,[0.78,0.76,0.73],1,"4 3");
+  // en-tête : bandeau bleu + filet jaune
+  rectF(0,0,W,84,BLUE); rectF(0,84,W,4,YEL);
+  text("F2",10.5,40,32,"DIGITAL DREAMS SARL",WHITE);
+  text("F2",20,40,62,oc?"CASH PAYMENT VOUCHER":"CASH RECEIPT VOUCHER",WHITE);
+  textR("F3",14,555,34,"No. "+no,WHITE);
+  textR("F1",11,555,56,dateTxt,WHITE);
 
   // champs
-  var y=136;
+  var y=118;
   function field(label,value){
-    text("F1",9,46,y,label.toUpperCase(),gray);
-    var ls=wrapText(value||"—",11,400,false);
-    ls.slice(0,2).forEach(function(t,i){ text("F1",11,140,y+i*14,t,ink); });
+    text("F1",9,40,y,label.toUpperCase(),GRAY);
+    var ls=wrapText(value||"—",11,420,false);
+    ls.slice(0,2).forEach(function(t,i){ text("F1",11,130,y+i*14,t,INK); });
     y += 14*Math.min(ls.length,2) + 8;
   }
   field("Purpose",h.description);
@@ -691,31 +689,34 @@ function pieceContent(h){
   field(oc?"Paid from":"Received into",h.source);
 
   // montant
-  var ay=Math.max(y+4,262);
-  rectF(46,ay,503,44,light);
-  text("F1",9,58,ay+17,"AMOUNT",gray);
-  textR("F5",24,538,ay+32,amountTxt,main);
-  // cachet
+  var ay=Math.max(y+4,250);
+  rectF(40,ay,515,44,LIGHT); rectF(40,ay,4,44,BLUE);
+  text("F1",9,56,ay+17,"AMOUNT",GRAY);
+  textR("F5",24,545,ay+32,amountTxt,BLUE);
+
+  // cachet d'état
   var stw=tw(st[0],9.5,true)+16;
-  o+="q 0.9945 -0.1045 0.1045 0.9945 "+(175).toFixed(2)+" "+Y(ay+36)+" cm\n";
-  o+=col(st[1])+" RG 1.3 w 0 0 "+stw.toFixed(2)+" 17 re S\n";
-  o+="BT /F2 9.5 Tf "+col(st[1])+" rg 8 5 Td "+pdfStr(st[0])+" Tj ET\nQ\n";
+  o+="q 0.9945 -0.1045 0.1045 0.9945 175 "+Y(ay+36)+" cm\n";
+  if(st[1]==="fill"){ o+=col(YEL)+" rg 0 0 "+stw.toFixed(2)+" 17 re f\n"; }
+  else { o+=col(st[2])+" RG 1.3 w 0 0 "+stw.toFixed(2)+" 17 re S\n"; }
+  o+="BT /F2 9.5 Tf "+col(st[1]==="fill"?INK:st[2])+" rg 8 5 Td "+pdfStr(st[0])+" Tj ET\nQ\n";
 
   // montant en lettres
-  var words="Amount in words: "+cap(wordsEn(h.raw))+" CFA francs only.";
-  var wl=wrapText(words,10.5,500,false);
-  wl.slice(0,2).forEach(function(t,i){ text("F4",10.5,46,ay+62+i*13,t,[0.35,0.33,0.31]); });
+  var wl=wrapText("Amount in words: "+cap(wordsEn(h.raw))+" CFA francs only.",10.5,515,false);
+  wl.slice(0,2).forEach(function(t,i){ text("F4",10.5,40,ay+62+i*13,t,GRAY); });
 
-  // signatures
-  var sy=336;
-  rectS(46,sy,243,48,[0.85,0.83,0.8],0.7);
-  text("F1",8.5,54,sy+13,"PREPARED BY",gray);
-  text("F2",11,54,sy+28,"Mrs "+h.user,ink);
-  text("F1",7.5,54,sy+40,"Electronically signed on "+dateTxt+" at "+timeTxt+(h.dev?" · device "+h.dev:""),gray);
-  rectS(306,sy,243,48,[0.85,0.83,0.8],0.7);
-  text("F1",8.5,314,sy+13,"APPROVED BY (MANAGEMENT)",gray);
+  // préparé / approuvé
+  var sy=334;
+  [["PREPARED BY",40],["APPROVED BY",305]].forEach(function(b){
+    rectS(b[1],sy,250,50,LINE,0.7);
+    text("F1",8.5,b[1]+8,sy+13,b[0],GRAY);
+    text("F2",11.5,b[1]+8,sy+30,PREPARER,INK);
+    text("F1",8,b[1]+8,sy+43,PREPARER_TITLE,GRAY);
+  });
 
-  text("F1",7,46,408,"Generated by DiDreams Cash Log · "+no,[0.6,0.58,0.55]);
+  text("F1",7.5,40,399,"Entered electronically by Mrs "+h.user+" on "+entTxt+(h.dev?" · device "+h.dev:""),GRAY);
+  text("F1",7,40,411,"Generated by DiDreams Cash Log · "+no,[0.6,0.6,0.6]);
+  rectF(0,415,W,5,YEL);
   return o;
 }
 
@@ -958,6 +959,12 @@ function pickerTitle(){
   if(state.picker==="category") return "What was it?";
   return state.direction==="out" ? "Where did it go out from?" : "Where did it come in to?";
 }
+function dateBoxHTML(){
+  return '<div class="notebox" style="min-height:56px;align-items:center"><input id="dateinput" type="date" value="'+esc(state.date||todayISO())+'" max="'+todayISO()+'" min="'+minISO()+'"></div>'+
+    '<div class="sub">Pick an earlier date to record a past expense or receipt.</div>'+
+    '<button class="cancelbtn" data-act="datetoday">Use today</button>'+
+    '<button class="done" data-act="close">Done</button>';
+}
 function noteBoxHTML(){
   return '<div class="notebox"><input id="note" value="'+esc(state.description)+'" placeholder="e.g. ENEO electricity bill for August"></div>';
 }
@@ -995,6 +1002,8 @@ function sheetsHTML(){
     inner = '<h2>What was it for?</h2>'+noteBoxHTML()+
       '<div class="sub">Written as-is into the Google Sheet.</div>'+
       '<button class="done" data-act="close">Done</button>';
+  } else if(s==="date"){
+    inner = '<h2>When was it?</h2>'+dateBoxHTML();
   } else if(s==="users"){
     inner = '<h2>This device</h2>'+deviceInner();
   }
@@ -1009,6 +1018,7 @@ function dialogHTML(){
   else if(s==="picker"){ title = pickerTitle(); inner = pickerOptionsHTML(); }
   else if(s==="note"){ title = "What was it for?"; inner = noteBoxHTML()+
     '<div class="sub">Written as-is into the Google Sheet.</div><button class="done" data-act="close">Done</button>'; }
+  else if(s==="date"){ title = "When was it?"; inner = dateBoxHTML(); }
   else if(s==="users"){ title = "This device"; inner = deviceInner(); }
   return '<div class="dialog-back" data-act="backdrop"><div class="dialog" data-act="stop"><h2>'+esc(title)+'</h2>'+inner+'</div></div>';
 }
@@ -1060,6 +1070,8 @@ document.addEventListener("click", function(e){
     case "key": press(p)(); break;
     case "picker": state.sheet="picker"; state.picker=p; render(); break;
     case "note": state.sheet="note"; state.focus="note"; render(); break;
+    case "date": state.sheet="date"; render(); break;
+    case "datetoday": state.date=null; state.sheet=null; render(); break;
     case "users": state.sheet="users"; render(); break;
     case "close": state.sheet=null; state.picker=null; state.focus=null; state.selected=null; render(); break;
     case "pick":
@@ -1108,6 +1120,11 @@ window.addEventListener("popstate", function(e){
 /* text inputs: update state without a disruptive full re-render on every keystroke */
 document.addEventListener("input", function(e){
   if(e.target.id==="note"){ state.description = e.target.value; return; }
+  if(e.target.id==="dateinput"){
+    var dv=e.target.value;
+    if(/^\d{4}-\d{2}-\d{2}$/.test(dv) && dv<=todayISO() && dv>=minISO()){ state.date=dv; }
+    return;
+  }
   if(e.target.id==="code"){ state.enrollCode = e.target.value.replace(/\D/g,"").slice(0,6); return; }
   if(e.target.id==="damt"){
     var v = e.target.value.replace(/\D/g,"").replace(/^0+/,"").slice(0,9);
