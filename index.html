@@ -256,17 +256,17 @@ var IN_CATS = [
   { label:"Printing / copies", account:"706", activity:"Office" },
   { label:"Something else", account:"", activity:"Shared" }
 ];
-var SOURCES = ["Cash box", "Director"];
+var SOURCES = ["Cash box", "CEO"];
 
 /* map the design's labels onto the codes the Apps Script backend expects */
 var ACT_MAP = { Shared:"COMMON", Office:"OFFICE", Marketing:"MARKETING" };
-var SRC_MAP = { "Cash box":"CASH", "Director":"DIRECTOR" };
+var SRC_MAP = { "Cash box":"CASH", "CEO":"DIRECTOR" };
 
 function sourceLabel(source){
   if(source === "CASH" || source === "Cash box") return "Cash box";
-  if(["DIRECTOR", "Director", "UBA", "UBA account", "MoMo", "COY-OM",
+  if(["DIRECTOR", "Director", "CEO", "UBA", "UBA account", "MoMo", "COY-OM",
       "DIR-BANK", "Director's bank", "DIR-OM", "Orange Money"].indexOf(source) !== -1){
-    return "Director";
+    return "CEO";
   }
   return source || "";
 }
