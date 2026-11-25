@@ -273,7 +273,7 @@ function sourceLabel(source){
 
 /* -------- state -------- */
 var state = {
-  screen:"entry", direction:"out", digits:"", category:null, source:null, description:"",
+  screen:"entry", direction:"out", digits:"", category:null, source:null, description:"", receipt:"",
   sheet:null, picker:null, history:[], focus:null, selected:null, date:null,
   /* identité : fixée par l'appareil enrôlé, jamais choisie dans l'appli */
   user:null, device:null, secret:null, locked:false, bioOffer:false,
@@ -442,6 +442,11 @@ function keepQueued(p,msg){
 
 function submit(){
   if(!ready()) return;
+  var receipt = state.receipt.trim();
+  if(receipt && (!/^https:\/\/[^\s]+$/i.test(receipt) || receipt.length > 2048)){
+    toast("Use an HTTPS link for the invoice or receipt.");
+    return;
+  }
   var cat = currentCat();
   var raw = state.digits;
   var online = navigator.onLine;
@@ -453,7 +458,7 @@ function submit(){
   var entry = {
     cid:cid, dir:state.direction, category:state.category,
     raw:raw, amount:(state.direction==="out"?"−":"+")+fmt(raw),
-    description:state.description.trim(), source:state.source, user:state.user, dev:state.device,
+    description:state.description.trim(), receipt:receipt, source:state.source, user:state.user, dev:state.device,
     account:cat.account, activity:cat.activity, piece:"", vdate:vdate,
     meta:state.user+" · "+hh+" · "+state.source, ts:now.toISOString(),
     sync:"Pending"            // passe à « Sent » seulement quand le serveur a numéroté la pièce
@@ -463,14 +468,14 @@ function submit(){
     token:TOKEN, amount:raw, type:state.direction==="out"?"OUT":"IN",
     account:cat.account, activity:ACT_MAP[cat.activity]||cat.activity, category:cat.label,
     source:SRC_MAP[state.source]||state.source, description:state.description.trim(),
-    counterparty:"", receipt:"",
+    counterparty:"", receipt:receipt,
     date:vdate,
     person:state.user, cid:cid
   };
 
   state.history.unshift(entry); saveHistory();
   // clear amount/category/source/note; keep direction and user
-  state.digits=""; state.category=null; state.source=null; state.description=""; state.sheet=null; state.picker=null;
+  state.digits=""; state.category=null; state.source=null; state.description=""; state.receipt=""; state.sheet=null; state.picker=null;
   render();
 
   signPayload(payload).then(function(p){
@@ -558,6 +563,7 @@ function fieldsHTML(){
     '<button class="row" data-act="picker" data-p="category"><span class="lbl">What was it?</span>'+catVal+'<span class="chev">›</span></button>'+
     '<button class="row" data-act="picker" data-p="source"><span class="lbl">'+(out?"Out of":"Into")+'</span>'+srcVal+'<span class="chev">›</span></button>'+
     '<button class="row" data-act="note"><span class="lbl">For what</span>'+noteVal+'<span class="chev">›</span></button>'+
+    '<button class="row" data-act="invoice"><span class="lbl">Invoice / receipt</span><span class="val'+(state.receipt.trim()?"":" empty")+'">'+(state.receipt.trim()?"Link added":"Add link") +'</span><span class="chev">›</span></button>'+
     '<button class="row" data-act="date"><span class="lbl">Date</span>'+dateVal+'<span class="chev">›</span></button>';
 }
 function derivedHTML(cls){
@@ -990,6 +996,11 @@ function dateBoxHTML(){
     '<button class="cancelbtn" data-act="datetoday">Use today</button>'+
     '<button class="done" data-act="close">Done</button>';
 }
+function invoiceBoxHTML(){
+  return '<div class="notebox"><input aria-label="Invoice or receipt link" id="receipt" type="url" inputmode="url" maxlength="2048" value="'+esc(state.receipt)+'" placeholder="https://"></div>'+
+    '<div class="sub">Paste the link to the invoice or receipt. It will be saved with the journal entry.</div>'+
+    '<button class="done" data-act="close">Done</button>';
+}
 function noteBoxHTML(){
   return '<div class="notebox"><input id="note" value="'+esc(state.description)+'" placeholder="e.g. ENEO electricity bill for August"></div>';
 }
@@ -1026,7 +1037,8 @@ function sheetsHTML(){
       '<button class="done" data-act="close">Done</button>';
   } else if(s==="picker"){
     inner = '<h2>'+esc(pickerTitle())+'</h2>'+pickerOptionsHTML();
-  } else if(s==="note"){
+  } else if(s==="invoice"){ inner = '<h2>Invoice / receipt</h2>'+invoiceBoxHTML(); }
+  else if(s==="note"){
     inner = '<h2>What was it for?</h2>'+noteBoxHTML()+
       '<div class="sub">Written as-is into the Google Sheet.</div>'+
       '<button class="done" data-act="close">Done</button>';
@@ -1044,6 +1056,7 @@ function dialogHTML(){
   var title, inner;
   if(s==="entry"){ title = "Voucher"; inner = entrySheetInner(); }
   else if(s==="picker"){ title = pickerTitle(); inner = pickerOptionsHTML(); }
+  else if(s==="invoice"){ title = "Invoice / receipt"; inner = invoiceBoxHTML(); }
   else if(s==="note"){ title = "What was it for?"; inner = noteBoxHTML()+
     '<div class="sub">Written as-is into the Google Sheet.</div><button class="done" data-act="close">Done</button>'; }
   else if(s==="date"){ title = "When was it?"; inner = dateBoxHTML(); }
@@ -1097,6 +1110,7 @@ document.addEventListener("click", function(e){
     case "keypad": state.sheet="keypad"; render(); break;
     case "key": press(p)(); break;
     case "picker": state.sheet="picker"; state.picker=p; render(); break;
+    case "invoice": state.sheet="invoice"; render(); break;
     case "note": state.sheet="note"; state.focus="note"; render(); break;
     case "date": state.sheet="date"; render(); break;
     case "datetoday": state.date=null; state.sheet=null; render(); break;
@@ -1113,6 +1127,7 @@ document.addEventListener("click", function(e){
       state.category = refused.category;
       state.source = sourceLabel(refused.source);
       state.description = refused.description;
+      state.receipt = refused.receipt || "";
       state.date = refused.vdate;
       state.selected = null;
       state.sheet = null;
@@ -1162,6 +1177,7 @@ window.addEventListener("popstate", function(e){
 
 /* text inputs: update state without a disruptive full re-render on every keystroke */
 document.addEventListener("input", function(e){
+  if(e.target.id==="receipt"){ state.receipt = e.target.value; return; }
   if(e.target.id==="note"){ state.description = e.target.value; return; }
   if(e.target.id==="dateinput"){
     var dv=e.target.value;
