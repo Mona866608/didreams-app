@@ -252,6 +252,7 @@ var OUT_CATS = [
   { label:"Something else", account:"", activity:"Shared" }
 ];
 var IN_CATS = [
+  { label:"CEO cash advance", account:"571", activity:"Shared", type:"TRF", fixedSource:"CEO" },
   { label:"Client marketing", account:"706", activity:"Marketing" },
   { label:"Printing / copies", account:"706", activity:"Office" },
   { label:"Something else", account:"", activity:"Shared" }
@@ -396,7 +397,7 @@ function toast(text){ clearTimeout(_toast); state.toast=text; render();
 
 function cats(){ return state.direction==="out" ? OUT_CATS : IN_CATS; }
 function currentCat(){ var l=state.category; return cats().filter(function(c){return c.label===l;})[0]; }
-function ready(){ return state.device && state.user && state.digits && state.category && state.source && state.description.trim(); }
+function ready(){ var cat=currentCat(); return state.device && state.user && state.digits && cat && (cat.fixedSource || state.source) && state.description.trim(); }
 
 function todayTotals(){
   var out=0, inn=0, today=new Date().toDateString();
@@ -428,6 +429,7 @@ function keepQueued(p,msg){
 function submit(){
   if(!ready()) return;
   var cat = currentCat();
+  var source = cat.fixedSource || state.source;
   var raw = state.digits;
   var online = navigator.onLine;
   var now = new Date();
@@ -438,16 +440,16 @@ function submit(){
   var entry = {
     cid:cid, dir:state.direction, category:state.category,
     raw:raw, amount:(state.direction==="out"?"−":"+")+fmt(raw),
-    description:state.description.trim(), source:state.source, user:state.user, dev:state.device,
+    description:state.description.trim(), source:source, movementType:cat.type, user:state.user, dev:state.device,
     account:cat.account, activity:cat.activity, piece:"", vdate:vdate,
-    meta:state.user+" · "+hh+" · "+state.source, ts:now.toISOString(),
+    meta:state.user+" · "+hh+" · "+source, ts:now.toISOString(),
     sync:"Pending"            // passe à « Sent » seulement quand le serveur a numéroté la pièce
   };
 
   var payload = {
-    token:TOKEN, amount:raw, type:state.direction==="out"?"OUT":"IN",
+    token:TOKEN, amount:raw, type:cat.type || (state.direction==="out"?"OUT":"IN"),
     account:cat.account, activity:ACT_MAP[cat.activity]||cat.activity, category:cat.label,
-    source:SRC_MAP[state.source]||state.source, description:state.description.trim(),
+    source:SRC_MAP[source]||source, description:state.description.trim(),
     counterparty:"", receipt:"",
     date:vdate,
     person:state.user, cid:cid
@@ -528,7 +530,8 @@ function fieldsHTML(){
   var catVal = state.category
     ? '<span class="val">'+esc(state.category)+'</span>'
     : '<span class="val empty">Choose</span>';
-  var srcVal = state.source
+  var srcVal = (currentCat() && currentCat().fixedSource)
+    ? '<span class="val">Cash box</span>' : state.source
     ? '<span class="val">'+esc(state.source)+'</span>'
     : '<span class="val empty">Choose</span>';
   var dateVal = (!state.date || state.date===todayISO())
@@ -601,7 +604,7 @@ function pieceHTML(h){
       '<div class="pc-line"><span class="k">Purpose</span><span class="v">'+esc(h.description||"—")+'</span></div>'+
       '<div class="pc-line"><span class="k">Category</span><span class="v">'+esc(h.category)+'</span></div>'+
       (imput?'<div class="pc-line"><span class="k">Account</span><span class="v">'+esc(imput)+'</span></div>':'')+
-      '<div class="pc-line"><span class="k">'+(oc?"Paid from":"Received into")+'</span><span class="v">'+esc(sourceLabel(h.source))+'</span></div>'+
+      '<div class="pc-line"><span class="k">'+(oc?"Paid from":h.movementType==="TRF"?"Received from":"Received into")+'</span><span class="v">'+esc(sourceLabel(h.source))+'</span></div>'+
     '</div>'+
     '<div class="pc-amt"><span class="k">AMOUNT</span><span class="v mono">'+esc(h.amount)+' FCFA</span></div>'+
     '<div class="pc-words">Amount in words: '+esc(cap(wordsEn(h.raw)))+' CFA francs only.</div>'+
@@ -694,7 +697,7 @@ function pieceContent(h){
   field("Purpose",h.description);
   field("Category",h.category);
   if(imput) field("Account",imput);
-  field(oc?"Paid from":"Received into",sourceLabel(h.source));
+  field(oc?"Paid from":h.movementType==="TRF"?"Received from":"Received into",sourceLabel(h.source));
 
   // montant
   var ay=Math.max(y+4,250);
@@ -1076,7 +1079,7 @@ document.addEventListener("click", function(e){
     case "dlall": downloadAll(); break;
     case "keypad": state.sheet="keypad"; render(); break;
     case "key": press(p)(); break;
-    case "picker": state.sheet="picker"; state.picker=p; render(); break;
+    case "picker": if(p==="source" && currentCat() && currentCat().fixedSource) break; state.sheet="picker"; state.picker=p; render(); break;
     case "note": state.sheet="note"; state.focus="note"; render(); break;
     case "date": state.sheet="date"; render(); break;
     case "datetoday": state.date=null; state.sheet=null; render(); break;
