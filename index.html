@@ -232,7 +232,6 @@ input{font-family:inherit}
    PASTE YOUR WEB APP URL HERE — it must end with /exec
    ============================================================ */
 var ENDPOINT = 'https://script.google.com/macros/s/AKfycbx1uoE_eIFjZV20ykaxE5lQ6tHi4BhVc3LWIyAyqbkTMcsVIlt8BgD4_aP6Lh8vzdVN/exec';
-var TOKEN    = 'dd-7Kq2mXv9Rt4LpZ8w';   // must match PWA_TOKEN in Form.gs
 /* ========================================================== */
 
 /* -------- reference data --------
@@ -256,13 +255,14 @@ var IN_CATS = [
   { label:"Printing / copies", account:"706", activity:"Office" },
   { label:"Something else", account:"", activity:"Shared" }
 ];
-var SOURCES = ["Cash box", "CEO"];
+var SOURCES = ["Cash box", "CEO", "UBA (521)"];
 
 /* map the design's labels onto the codes the Apps Script backend expects */
 var ACT_MAP = { Shared:"COMMON", Office:"OFFICE", Marketing:"MARKETING" };
-var SRC_MAP = { "Cash box":"CASH", "CEO":"DIRECTOR" };
+var SRC_MAP = { "Cash box":"CASH", "CEO":"DIRECTOR", "UBA (521)":"UBA_COMPANY" };
 
 function sourceLabel(source){
+  if(source === "UBA (521)" || source === "UBA_COMPANY") return "UBA (521)";
   if(source === "CASH" || source === "Cash box") return "Cash box";
   if(["DIRECTOR", "Director", "CEO", "UBA", "UBA account", "MoMo", "COY-OM",
       "DIR-BANK", "Director's bank", "DIR-OM", "Orange Money"].indexOf(source) !== -1){
@@ -465,7 +465,7 @@ function submit(){
   };
 
   var payload = {
-    token:TOKEN, amount:raw, type:state.direction==="out"?"OUT":"IN",
+    amount:raw, type:state.direction==="out"?"OUT":"IN",
     account:cat.account, activity:ACT_MAP[cat.activity]||cat.activity, category:cat.label,
     source:SRC_MAP[state.source]||state.source, description:state.description.trim(),
     counterparty:"", receipt:receipt,
@@ -510,7 +510,7 @@ function doEnroll(){
   if(code.length<6){ state.enrollErr="Enter the 6-digit code"; render(); return; }
   if(!navigator.onLine){ state.enrollErr="A connection is required to activate the device"; render(); return; }
   state.busy=true; state.enrollErr=""; render();
-  send({ token:TOKEN, action:"enroll", code:code }).then(function(res){
+  send({ action:"enroll", code:code }).then(function(res){
     state.busy=false;
     if(res && res.ok){
       state.device=res.device; state.secret=res.secret; state.user=res.person;
