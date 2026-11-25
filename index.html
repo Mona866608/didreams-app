@@ -244,8 +244,8 @@ var OUT_CATS = [
   { label:"Rent", account:"6222", activity:"Shared" },
   { label:"Electricity", account:"6052", activity:"Shared" },
   { label:"Water", account:"6051", activity:"Shared" },
-  { label:"Internet / CAMTEL", account:"6281", activity:"Marketing" },
-  { label:"Supplies", account:"6055", activity:"Office" },
+  { label:"Internet / CAMTEL", account:"6288", activity:"Marketing" },
+  { label:"Supplies", account:"6047", activity:"Office" },
   { label:"Transport", account:"614", activity:"Shared" },
   { label:"Salary", account:"6611", activity:"Shared" },
   { label:"Bank fees", account:"6318", activity:"Shared" },
@@ -256,12 +256,20 @@ var IN_CATS = [
   { label:"Printing / copies", account:"706", activity:"Office" },
   { label:"Something else", account:"", activity:"Shared" }
 ];
-var SOURCES = ["Cash box", "UBA account", "MoMo", "Director's bank", "Orange Money"];
+var SOURCES = ["Cash box", "Director"];
 
 /* map the design's labels onto the codes the Apps Script backend expects */
 var ACT_MAP = { Shared:"COMMON", Office:"OFFICE", Marketing:"MARKETING" };
-var SRC_MAP = { "Cash box":"CASH", "UBA account":"UBA", "MoMo":"COY-OM",
-  "Director's bank":"DIR-BANK", "Orange Money":"DIR-OM" };
+var SRC_MAP = { "Cash box":"CASH", "Director":"DIRECTOR" };
+
+function sourceLabel(source){
+  if(source === "CASH" || source === "Cash box") return "Cash box";
+  if(["DIRECTOR", "Director", "UBA", "UBA account", "MoMo", "COY-OM",
+      "DIR-BANK", "Director's bank", "DIR-OM", "Orange Money"].indexOf(source) !== -1){
+    return "Director";
+  }
+  return source || "";
+}
 
 /* -------- state -------- */
 var state = {
@@ -593,7 +601,7 @@ function pieceHTML(h){
       '<div class="pc-line"><span class="k">Purpose</span><span class="v">'+esc(h.description||"—")+'</span></div>'+
       '<div class="pc-line"><span class="k">Category</span><span class="v">'+esc(h.category)+'</span></div>'+
       (imput?'<div class="pc-line"><span class="k">Account</span><span class="v">'+esc(imput)+'</span></div>':'')+
-      '<div class="pc-line"><span class="k">'+(oc?"Paid from":"Received into")+'</span><span class="v">'+esc(h.source)+'</span></div>'+
+      '<div class="pc-line"><span class="k">'+(oc?"Paid from":"Received into")+'</span><span class="v">'+esc(sourceLabel(h.source))+'</span></div>'+
     '</div>'+
     '<div class="pc-amt"><span class="k">AMOUNT</span><span class="v mono">'+esc(h.amount)+' FCFA</span></div>'+
     '<div class="pc-words">Amount in words: '+esc(cap(wordsEn(h.raw)))+' CFA francs only.</div>'+
@@ -686,7 +694,7 @@ function pieceContent(h){
   field("Purpose",h.description);
   field("Category",h.category);
   if(imput) field("Account",imput);
-  field(oc?"Paid from":"Received into",h.source);
+  field(oc?"Paid from":"Received into",sourceLabel(h.source));
 
   // montant
   var ay=Math.max(y+4,250);
@@ -885,7 +893,7 @@ function desktopHTML(){
           '<div class="tiledot '+(oc?"out":"in")+'">'+(oc?"↑":"↓")+'</div>'+
           '<div class="lcat">'+esc(h.category)+'<div class="mono" style="font-size:11px;color:var(--faint)">'+esc(no)+'</div></div>'+
           '<div class="lfor">'+esc(h.description)+'</div>'+
-          '<div class="lsrc">'+esc(h.source)+'</div>'+
+          '<div class="lsrc">'+esc(sourceLabel(h.source))+'</div>'+
           '<div><span class="badge '+(h.sync==="Sent"?"sent":"pending")+'">'+esc(h.sync)+'</span></div>'+
           '<div class="lamt '+(oc?"out":"in")+' mono">'+esc(h.amount)+'</div>'+
         '</div>';
