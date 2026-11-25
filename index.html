@@ -379,7 +379,7 @@ function flush(){
       rest = rest.filter(function(x){ return x.cid !== next.cid; });
       setQueue(rest);
       state.history.forEach(function(h){
-        if(h.cid === next.cid){ h.sync = "Sent"; if(res.piece || res.ref){ h.piece = res.piece || res.ref; } }
+        if(h.cid === next.cid){ h.sync = "Sent"; if(res.piece || res.ref){ h.piece = res.piece || res.ref; h.journalRef = res.ref || ""; } }
       });
       saveHistory();
       if(!rest.length){ toast(q.length + (q.length>1?" vouchers recorded":" voucher recorded") + " ✓"); }
@@ -489,7 +489,7 @@ function submit(){
           if(h.cid===cid){ h.sync="Sent"; if(res.piece || res.ref){ h.piece=res.piece || res.ref; } }
         });
         saveHistory();
-        toast("Voucher "+(entry.dir==="out"?"CPV-":"CRV-")+(res.piece || res.ref || "")+" recorded ✓");
+        toast("Voucher "+pieceNo({ dir:entry.dir, piece:res.piece || res.ref, cid:cid })+" recorded ✓");
       } else if(isCashRefusal(res)){
         markRefused(cid, res.message || "Insufficient cash for this voucher.");
       } else {
@@ -600,10 +600,21 @@ function wordsEn(n){
 function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
 
 
-/* N° de pièce = référence du JOURNAL (ex. 2026-11-003), préfixée PC (sortie) ou RC (entrée).
-   Tant que le serveur ne l'a pas attribuée : numéro provisoire. */
+/* Confirmed vouchers use the date-based number returned by the Journal. */
 function pieceNo(h){
-  return h.piece ? (h.dir==="out"?"CPV-":"CRV-")+h.piece : "PROV-"+String(h.cid).slice(-5).toUpperCase();
+  if(!h.piece) return "PROV-"+String(h.cid).slice(-5).toUpperCase();
+  var number = String(h.piece).split(" + ")[0];
+  return /^(CPV|CRV|TRF)-/.test(number) ? number : (h.dir==="out"?"CPV-":"CRV-")+number;
+}
+
+function datedHistory(){
+  return state.history.slice().sort(function(a,b){
+    var dateA = a.vdate || String(a.ts || "").slice(0,10);
+    var dateB = b.vdate || String(b.ts || "").slice(0,10);
+    return dateB.localeCompare(dateA) ||
+      pieceNo(b).localeCompare(pieceNo(a), "en", {numeric:true}) ||
+      String(b.ts || "").localeCompare(String(a.ts || ""));
+  });
 }
 
 function pieceHTML(h){
@@ -623,6 +634,7 @@ function pieceHTML(h){
     '<div class="pc-body">'+
       '<div class="pc-line"><span class="k">Purpose</span><span class="v">'+esc(h.description||"—")+'</span></div>'+
       '<div class="pc-line"><span class="k">Category</span><span class="v">'+esc(h.category)+'</span></div>'+
+      (h.journalRef?'<div class="pc-line"><span class="k">Journal ref.</span><span class="v">'+esc(h.journalRef)+'</span></div>':'')+
       (imput?'<div class="pc-line"><span class="k">Account</span><span class="v">'+esc(imput)+'</span></div>':'')+
       '<div class="pc-line"><span class="k">'+(oc?"Paid from":"Received into")+'</span><span class="v">'+esc(sourceLabel(h.source))+'</span></div>'+
     '</div>'+
@@ -716,6 +728,7 @@ function pieceContent(h){
   }
   field("Purpose",h.description);
   field("Category",h.category);
+  if(h.journalRef) field("Journal ref.",h.journalRef);
   if(imput) field("Account",imput);
   field(oc?"Paid from":"Received into",sourceLabel(h.source));
 
@@ -805,7 +818,7 @@ function sharePiece(cid){
   navigator.share({ files:[f], title:pieceNo(h) }).catch(function(){});
 }
 function downloadAll(){
-  var list=state.history.slice(0,100).reverse();
+  var list=datedHistory().slice(0,100).reverse();
   if(!list.length) return;
   var d=new Date();
   saveBlob(pdfBlob(list),"Cash-vouchers-"+d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate())+".pdf");
@@ -882,7 +895,7 @@ function historyHTML(){
         '<div class="fig"><div class="k">Out today</div><div class="v mono" style="color:var(--out)">−'+esc(fmt(t.out))+'</div></div>'+
         '<div class="fig"><div class="k">In today</div><div class="v mono" style="color:var(--in)">+'+esc(fmt(t.inn))+'</div></div>'+
       '</div>'+
-      state.history.map(pieceHTML).join("")+
+      datedHistory().map(pieceHTML).join("")+
     '</div>';
   }
   return '<div class="scroll">'+bar+body+'</div>';
@@ -909,7 +922,7 @@ function desktopHTML(){
   var out = state.direction==="out";
   var t = todayTotals();
   var ledger = state.history.length
-    ? state.history.map(function(h){
+    ? datedHistory().map(function(h){
         var oc=h.dir==="out";
         var no = pieceNo(h);
         return '<div class="lrow" data-act="hentry" data-p="'+esc(h.cid)+'">'+
