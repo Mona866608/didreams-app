@@ -353,6 +353,19 @@ function send(payload){
 }
 var flushing = false;   // empêche deux envois simultanés de la même saisie
 
+function isCashRefusal(res){
+  return !!(res && (res.code === "INSUFFICIENT_CASH" ||
+    /^Caisse insuffisante à cette date/.test(res.message || "")));
+}
+
+function markRefused(cid, message){
+  state.history.forEach(function(h){
+    if(h.cid === cid){ h.sync = "Refused"; h.refusal = message; }
+  });
+  saveHistory();
+  toast(message);
+}
+
 function flush(){
   if(flushing) return;
   var q = queue();
@@ -372,6 +385,10 @@ function flush(){
       if(!rest.length){ toast(q.length + (q.length>1?" vouchers recorded":" voucher recorded") + " ✓"); }
       render();
       flush();
+    } else if(isCashRefusal(res)){
+      setQueue(rest.filter(function(x){ return x.cid !== next.cid; }));
+      markRefused(next.cid, res.message || "Insufficient cash for this voucher.");
+      flush();
     } else {
       // le serveur a répondu mais a refusé : 5 essais au maximum (aucun si l'appareil n'est pas reconnu), puis abandon
       rest.forEach(function(x){ if(x.cid === next.cid){
@@ -379,9 +396,7 @@ function flush(){
       var dead = rest.filter(function(x){ return x.cid === next.cid && x.tries >= 5; });
       if(dead.length){
         rest = rest.filter(function(x){ return x.cid !== next.cid; });
-        state.history.forEach(function(h){ if(h.cid === next.cid) h.sync = "Refused"; });
-        saveHistory();
-        toast((res && res.message) || "Entry refused by the server");
+        markRefused(next.cid, (res && res.message) || "Entry refused by the server");
       }
       setQueue(rest);
       render();
@@ -470,6 +485,8 @@ function submit(){
         });
         saveHistory();
         toast("Voucher "+(entry.dir==="out"?"CPV-":"CRV-")+(res.piece || res.ref || "")+" recorded ✓");
+      } else if(isCashRefusal(res)){
+        markRefused(cid, res.message || "Insufficient cash for this voucher.");
       } else {
         keepQueued(p,(res && res.message) || "Refused by the server — kept on this phone");
       }
@@ -981,13 +998,16 @@ function entrySheetInner(){
   var h = state.history.filter(function(x){ return x.cid===state.selected; })[0];
   if(!h) return '<div class="sheetnote">Voucher not found.</div>';
   var pending = queue().some(function(x){ return x.cid===h.cid; });
-  var note = pending
+  var note = h.sync === "Refused"
+    ? (h.refusal || "The server refused this voucher. It was not recorded.")
+    : pending
     ? "Not sent yet: removing it cancels it, nothing reaches the workbook."
     : "Already recorded in the workbook. Removing it here does not delete it from the workbook: a numbered voucher is never deleted, it is cancelled by a reversing entry.";
   return pieceHTML(h).replace('data-act="hentry"','data-act="stop"')+
     '<button class="done" data-act="dl" data-p="'+esc(h.cid)+'">Download voucher (PDF)</button>'+
     (canShareFiles()?'<button class="cancelbtn" data-act="share" data-p="'+esc(h.cid)+'">Share</button>':'')+
-    '<div class="sheetnote">'+note+'</div>'+
+    '<div class="sheetnote">'+esc(note)+'</div>'+
+    (h.sync === "Refused" ? '<button class="cancelbtn" data-act="correct" data-p="'+esc(h.cid)+'">Correct and resubmit</button>' : '')+
     '<button class="delbtn" data-act="del" data-p="'+esc(h.cid)+'">Remove from this phone</button>'+
     '<button class="cancelbtn" data-act="close">Close</button>';
 }
@@ -1085,6 +1105,21 @@ document.addEventListener("click", function(e){
     case "pick":
       if(t.getAttribute("data-kind")==="category") state.category=p; else state.source=p;
       state.sheet=null; state.picker=null; render(); break;
+    case "correct":
+      var refused = state.history.find(function(h){ return h.cid === p && h.sync === "Refused"; });
+      if(!refused) break;
+      state.direction = refused.dir;
+      state.digits = refused.raw;
+      state.category = refused.category;
+      state.source = sourceLabel(refused.source);
+      state.description = refused.description;
+      state.date = refused.vdate;
+      state.selected = null;
+      state.sheet = null;
+      state.screen = "entry";
+      if(history.state && history.state.v === "h") history.back();
+      render();
+      break;
     case "submit": submit(); break;
     case "hentry": state.selected=p; state.sheet="entry"; render(); break;
     case "del":
