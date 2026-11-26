@@ -641,21 +641,48 @@ function applyVoucherMap(text, entries){
   return {updated:updated, unmatched:unmatched};
 }
 
-function importVoucherMap(){
-  var input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".csv,text/csv";
-  input.addEventListener("change", function(){
-    var file = input.files[0];
-    if(!file) return;
-    if(file.size > 1000000){ toast("The voucher index file is too large."); return; }
-    file.text().then(function(text){
-      var result = applyVoucherMap(text,state.history);
-      if(result.updated) saveHistory();
-      toast(result.updated+" voucher(s) updated"+(result.unmatched?" · "+result.unmatched+" without a matching reference":""));
-    }).catch(function(error){ toast(error.message || "Unable to read the voucher index."); });
-  }, {once:true});
-  input.click();
+
+var voucherSyncRunning = false;
+var lastVoucherSync = 0;
+async function syncVoucherNumbers(manual){
+  if(voucherSyncRunning || !navigator.onLine || !state.device || !state.secret || state.locked) return;
+  if(!manual && Date.now()-lastVoucherSync < 30000) return;
+  var device = state.device;
+  var refs = [...new Set(state.history.filter(function(entry){ return entry.sync === "Sent"; })
+    .flatMap(function(entry){
+      return (entry.journalRef || entry.piece || "").split(/\s+\+\s+/).map(function(ref){
+        return ref.replace(/^(CPV|CRV|TRF)-(?=\d{4}-\d{2}-)/,"");
+      });
+    }).filter(function(ref){ return /^\d{4}-\d{2}-\d{3,}[A-Z]?$/.test(ref); }))];
+  if(!refs.length) return;
+  voucherSyncRunning = true;
+  lastVoucherSync = Date.now();
+  try {
+    var lines = ["journal_ref,operation_date,voucher_no"];
+    for(var i=0;i<refs.length;i+=100){
+      if(state.device !== device || state.locked) return;
+      var batch = refs.slice(i,i+100);
+      var payload = await signPayload({
+        cid:"cl-"+Date.now()+"-"+Math.random().toString(36).slice(2,7),
+        type:"VOUCHER_LOOKUP", amount:"", account:"", source:"", date:"",
+        description:JSON.stringify(batch)
+      });
+      var res = await send(payload);
+      if(!res || !res.ok || !res.vouchers) throw new Error("Sync unavailable. Try again later.");
+      batch.forEach(function(ref){
+        var item = res.vouchers[ref];
+        if(item) lines.push([ref,item.date,item.number].join(","));
+      });
+    }
+    if(state.device !== device || state.locked) return;
+    var result = applyVoucherMap(lines.join("\n"),state.history);
+    if(result.updated){ saveHistory(); render(); }
+    if(manual) toast(result.updated+" voucher(s) updated"+(result.unmatched?" · "+result.unmatched+" without a matching reference":""));
+  } catch(error) {
+    if(manual) toast(error.message || "Voucher sync unavailable.");
+  } finally {
+    voucherSyncRunning = false;
+  }
 }
 
 function datedHistory(){
@@ -936,7 +963,7 @@ function historyHTML(){
   var body;
   var bar = '<div class="histbar">'+
     '<button class="backlink" data-act="screen" data-p="entry">‹ Back to entry</button>'+
-    (state.history.length?'<button class="backlink" data-act="voucher-import">Update voucher numbers</button><button class="backlink" data-act="dlall">Download all (PDF)</button>':'')+
+    (state.history.length?'<button class="backlink" data-act="voucher-import">Sync voucher numbers</button><button class="backlink" data-act="dlall">Download all (PDF)</button>':'')+
   '</div>';
   if(!state.history.length){
     body = '<div class="emptystate">No entries yet on this phone.<br>Record one from the New entry tab.</div>';
@@ -1015,7 +1042,7 @@ function desktopHTML(){
         submitHTML()+
       '</div>'+
       '<div class="ledger">'+
-        (state.history.length?'<button class="backlink" data-act="voucher-import">Update voucher numbers</button>':'')+
+        (state.history.length?'<button class="backlink" data-act="voucher-import">Sync voucher numbers</button>':'')+
         '<div class="lhead"><div></div><div>Category</div><div>What for</div><div>Source</div><div>Status</div><div style="text-align:right">Amount</div></div>'+
         ledger+
       '</div>'+
@@ -1164,7 +1191,7 @@ document.addEventListener("click", function(e){
     case "dir": setDirection(p)(); break;
     case "screen":
       if(p==="history" && state.screen!=="history"){
-        state.screen="history"; try{ history.pushState({ v:"h" },""); }catch(e){} render();
+        state.screen="history"; try{ history.pushState({ v:"h" },""); }catch(e){} render(); syncVoucherNumbers();
       } else if(p==="entry" && state.screen==="history"){
         if(history.state && history.state.v==="h"){ history.back(); } else { state.screen="entry"; render(); }
       }
@@ -1172,7 +1199,7 @@ document.addEventListener("click", function(e){
     case "dl": downloadPiece(p); break;
     case "share": sharePiece(p); break;
     case "dlall": downloadAll(); break;
-    case "voucher-import": importVoucherMap(); break;
+    case "voucher-import": syncVoucherNumbers(true); break;
     case "keypad": state.sheet="keypad"; render(); break;
     case "key": press(p)(); break;
     case "picker": state.sheet="picker"; state.picker=p; render(); break;
@@ -1218,7 +1245,7 @@ document.addEventListener("click", function(e){
     case "biolater": state.bioOffer=false; render(); break;
     case "lock": state.sheet=null; state.locked=true; state.lockErr=""; render(); break;
     case "unlock":
-      bioUnlock().then(function(){ state.locked=false; state.lockErr=""; render(); flush(); })
+      bioUnlock().then(function(){ state.locked=false; state.lockErr=""; render(); flush(); syncVoucherNumbers(); })
         .catch(function(){ state.lockErr="Verification cancelled or failed"; render(); });
       break;
   }
@@ -1260,7 +1287,7 @@ document.addEventListener("input", function(e){
 document.addEventListener("focusin", function(e){ if(e.target.id==="note") state.focus="note"; });
 
 /* -------- network + verrou automatique -------- */
-window.addEventListener("online", function(){ render(); flush(); });
+window.addEventListener("online", function(){ render(); flush(); syncVoucherNumbers(); });
 window.addEventListener("offline", function(){ render(); });
 var hiddenAt = 0;
 document.addEventListener("visibilitychange", function(){
@@ -1269,6 +1296,7 @@ document.addEventListener("visibilitychange", function(){
   if(state.device && ls("cl_bio") && hiddenAt && Date.now()-hiddenAt > 60000){ state.locked=true; state.lockErr=""; render(); }
   hiddenAt = 0;
   flush();
+  syncVoucherNumbers();
 });
 window.addEventListener("focus", flush);
 
@@ -1280,6 +1308,7 @@ window.addEventListener("focus", flush);
   state.locked = !!(state.device && ls("cl_bio"));
   render();
   flush();
+  syncVoucherNumbers();
   setInterval(function(){ if(navigator.onLine && queue().length) flush(); }, 15000);
   if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
 })();
